@@ -1,48 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chain Counter - Order Input</title>
+  <title>ระบบนับข้อโซ่ - สั่งงานตรวจสอบ</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="app-container">
-    <!-- Sidebar -->
+    <!-- แถบเมนูด้านซ้าย -->
     <div class="sidebar">
-      <h3>HMI Function</h3>
-      <a href="/page1_input.html" class="sidebar-btn active">Order Input</a>
-      <a href="/page2_output.html" class="sidebar-btn">Operation</a>
-      <a href="/page3_stats.html" class="sidebar-btn">Production & Stats</a>
-      <a href="/page3_stats.html" class="sidebar-btn">Alarm & History</a>
-      <a href="#" class="sidebar-btn">Settings / Maintenance</a>
+      <h3>เมนูระบบ HMI</h3>
+      <a href="/page1_input.html" class="sidebar-btn active">สั่งงานตรวจสอบ</a>
+      <a href="/page2_output.html" class="sidebar-btn">หน้าจอควบคุม</a>
+      <a href="/page3_stats.html" class="sidebar-btn">สถิติการผลิต</a>
+      <a href="/page3_stats.html" class="sidebar-btn">แจ้งเตือน & ประวัติ</a>
+      <a href="#" class="sidebar-btn">ตั้งค่า / บำรุงรักษา</a>
     </div>
 
-    <!-- Main Content -->
+    <!-- เนื้อหาหลัก -->
     <div class="main-content">
-      <h1 class="page-title">Chain Counter & AI Defect Inspection</h1>
-      <p style="color:#888; margin-bottom:25px;">Submit a new inspection order. Data will be sent to Output Interface in real-time.</p>
+      <h1 class="page-title">ระบบนับข้อโซ่ & ตรวจจับตำหนิด้วย AI</h1>
+      <p style="color:#888; margin-bottom:25px;">สร้างคำสั่งตรวจสอบใหม่ ข้อมูลจะถูกส่งไปแสดงผลที่หน้าจอควบคุมแบบเรียลไทม์</p>
 
       <div class="panel">
-        <div class="panel-title">New Inspection Order</div>
+        <div class="panel-title">สร้างคำสั่งตรวจสอบใหม่</div>
         <div class="form-container">
           <form id="orderForm">
-            <!-- Mode Selection -->
+            <!-- เลือกโหมดการทำงาน -->
             <div class="form-group">
-              <label for="mode">Inspection Mode *</label>
+              <label for="mode">โหมดการตรวจสอบ *</label>
               <select id="mode" required>
-                <option value="">-- Select Mode --</option>
-                <option value="count">Chain Counting Only</option>
-                <option value="defect">Defect Detection Only</option>
-                <option value="both">Both (Count + Defect Detection)</option>
+                <option value="">-- เลือกโหมด --</option>
+                <option value="count">นับข้อโซ่อย่างเดียว</option>
+                <option value="defect">ตรวจจับตำหนิอย่างเดียว</option>
+                <option value="both">ทั้งสองอย่าง (นับข้อ + ตรวจตำหนิ)</option>
               </select>
             </div>
 
-            <!-- Chain Size -->
+            <!-- ขนาดโซ่ -->
             <div class="form-group">
-              <label for="chain_size">Chain Size *</label>
+              <label for="chain_size">ขนาดโซ่ *</label>
               <select id="chain_size" required>
-                <option value="">-- Select Size --</option>
+                <option value="">-- เลือกขนาด --</option>
                 <option value="6mm">6 mm</option>
                 <option value="8mm">8 mm</option>
                 <option value="10mm">10 mm</option>
@@ -54,58 +54,58 @@
               </select>
             </div>
 
-            <!-- Chain Color -->
+            <!-- สีโซ่ -->
             <div class="form-group">
-              <label for="chain_color">Chain Color (for detection) *</label>
+              <label for="chain_color">สีโซ่ (สำหรับการตรวจจับ) *</label>
               <select id="chain_color" required>
-                <option value="">-- Select Color --</option>
-                <option value="silver">Silver (Natural)</option>
-                <option value="gold">Gold (Zinc Plated)</option>
-                <option value="black">Black (Black Oxide)</option>
-                <option value="red">Red</option>
-                <option value="blue">Blue</option>
-                <option value="green">Green</option>
+                <option value="">-- เลือกสี --</option>
+                <option value="silver">เงิน (สีธรรมชาติ)</option>
+                <option value="gold">ทอง (ชุบสังกะสี)</option>
+                <option value="black">ดำ (เคลือบออกไซด์)</option>
+                <option value="red">แดง</option>
+                <option value="blue">น้ำเงิน</option>
+                <option value="green">เขียว</option>
               </select>
             </div>
 
-            <!-- Product Attribution -->
+            <!-- รายละเอียดสินค้า -->
             <div class="form-group">
-              <label for="product_attribution">Product Attribution (optional)</label>
-              <textarea id="product_attribution" rows="3" placeholder="e.g., Grade 80, DIN 5685, Customer: ABC Corp, Batch: 2024-001"></textarea>
+              <label for="product_attribution">รายละเอียดสินค้าเพิ่มเติม (ไม่บังคับ)</label>
+              <textarea id="product_attribution" rows="3" placeholder="เช่น Grade 80, DIN 5685, ลูกค้า: ABC Corp, ล็อต: 2024-001"></textarea>
             </div>
 
-            <!-- Submit -->
+            <!-- ปุ่มส่งคำสั่ง -->
             <button type="submit" class="btn btn-success btn-block">
-              ▶ Submit Order & Start
+              ▶ ส่งคำสั่งตรวจสอบ
             </button>
           </form>
         </div>
       </div>
 
-      <!-- Recent Orders -->
+      <!-- คำสั่งล่าสุด -->
       <div class="panel">
-        <div class="panel-title">Recent Orders</div>
+        <div class="panel-title">คำสั่งตรวจสอบล่าสุด</div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Mode</th>
-              <th>Size</th>
-              <th>Color</th>
-              <th>Attribution</th>
-              <th>Status</th>
-              <th>Created</th>
+              <th>รหัส</th>
+              <th>โหมด</th>
+              <th>ขนาด</th>
+              <th>สี</th>
+              <th>รายละเอียด</th>
+              <th>สถานะ</th>
+              <th>วันที่สร้าง</th>
             </tr>
           </thead>
           <tbody id="ordersTable">
-            <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">No orders yet</td></tr>
+            <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีคำสั่งตรวจสอบ</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- กล่องแจ้งเตือน -->
   <div class="toast" id="toast"></div>
 
   <script src="/socket.io/socket.io.js"></script>
