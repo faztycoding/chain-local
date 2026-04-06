@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chain Counter - Output Interface</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3>HMI Function</h3>
+      <a href="/page1_input.html" class="sidebar-btn">Order Input</a>
+      <a href="/page2_output.html" class="sidebar-btn active">Operation</a>
+      <a href="/page3_stats.html" class="sidebar-btn">Production & Stats</a>
+      <a href="/page3_stats.html" class="sidebar-btn">Alarm & History</a>
+      <a href="#" class="sidebar-btn">Settings / Maintenance</a>
+
+      <div class="sidebar-spacer"></div>
+
+      <button class="sidebar-btn start" id="btnStart" onclick="controlAction('running')">START</button>
+      <button class="sidebar-btn stop" id="btnStop" onclick="controlAction('stopped')">STOP</button>
+      <button class="sidebar-btn emergency" id="btnEmergency" onclick="controlAction('emergency')">EMERGENCY</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h1 class="page-title">Chain Counter & AI Defect Inspection</h1>
+
+      <!-- Status Cards Row -->
+      <div class="status-row">
+        <div class="status-card">
+          <div class="label">Camera Status</div>
+          <div class="value green" id="cameraStatus">CONNECTED</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Chain Status</div>
+          <div class="value orange" id="chainStatus">STOPPED</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Chain Count</div>
+          <div class="value blue" id="chainCount" style="font-size:28px;">0</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Detection Status</div>
+          <div class="value green" id="detectionStatus">NO DEFECT</div>
+        </div>
+        <div class="status-card">
+          <div class="label">System Status</div>
+          <div class="value red" id="systemStatus">STOPPED</div>
+        </div>
+      </div>
+
+      <!-- Current Order Info -->
+      <div class="panel" id="orderPanel" style="display:none;">
+        <div class="panel-title">Current Order</div>
+        <div class="order-info-grid">
+          <div class="order-info-item">
+            <div class="label">Order ID</div>
+            <div class="value" id="orderId">-</div>
+          </div>
+          <div class="order-info-item">
+            <div class="label">Mode</div>
+            <div class="value" id="orderMode">-</div>
+          </div>
+          <div class="order-info-item">
+            <div class="label">Chain Size</div>
+            <div class="value" id="orderSize">-</div>
+          </div>
+          <div class="order-info-item">
+            <div class="label">Chain Color</div>
+            <div class="value" id="orderColor">-</div>
+          </div>
+          <div class="order-info-item">
+            <div class="label">Attribution</div>
+            <div class="value" id="orderAttribution">-</div>
+          </div>
+          <div class="order-info-item">
+            <div class="label">Total Defects</div>
+            <div class="value" id="orderDefects" style="color:#e74c3c;">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Inspection Result -->
+      <div class="panel">
+        <div class="panel-title">AI Inspection Result</div>
+        <div class="ai-result">
+          <div class="ai-image-box" id="aiImageBox">
+            <span id="aiImagePlaceholder">Waiting for AI detection...</span>
+            <img id="aiImage" src="" alt="AI Detection" style="display:none;">
+          </div>
+          <div class="ai-info">
+            <div class="info-row"><strong>Defect Type:</strong> <span id="defectType">-</span></div>
+            <div class="info-row"><strong>Confidence:</strong> <span id="confidence">-</span></div>
+            <div class="info-row"><strong>Detected Chain Link:</strong> <span id="detectedLink">-</span></div>
+            <div class="info-row"><strong>Defect Detail:</strong> <span id="defectDetail">-</span></div>
+            <div class="info-row"><strong>Last Updated:</strong> <span id="lastUpdated">-</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detection Log -->
+      <div class="panel">
+        <div class="panel-title">Detection Log</div>
+        <div class="log-area" id="logArea">
+          <div class="log-entry"><span class="log-time">[System]</span> Waiting for connection...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/output.js"></script>
+</body>
+</html>

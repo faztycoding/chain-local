@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chain Counter - Order Input</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3>HMI Function</h3>
+      <a href="/page1_input.html" class="sidebar-btn active">Order Input</a>
+      <a href="/page2_output.html" class="sidebar-btn">Operation</a>
+      <a href="/page3_stats.html" class="sidebar-btn">Production & Stats</a>
+      <a href="/page3_stats.html" class="sidebar-btn">Alarm & History</a>
+      <a href="#" class="sidebar-btn">Settings / Maintenance</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h1 class="page-title">Chain Counter & AI Defect Inspection</h1>
+      <p style="color:#888; margin-bottom:25px;">Submit a new inspection order. Data will be sent to Output Interface in real-time.</p>
+
+      <div class="panel">
+        <div class="panel-title">New Inspection Order</div>
+        <div class="form-container">
+          <form id="orderForm">
+            <!-- Mode Selection -->
+            <div class="form-group">
+              <label for="mode">Inspection Mode *</label>
+              <select id="mode" required>
+                <option value="">-- Select Mode --</option>
+                <option value="count">Chain Counting Only</option>
+                <option value="defect">Defect Detection Only</option>
+                <option value="both">Both (Count + Defect Detection)</option>
+              </select>
+            </div>
+
+            <!-- Chain Size -->
+            <div class="form-group">
+              <label for="chain_size">Chain Size *</label>
+              <select id="chain_size" required>
+                <option value="">-- Select Size --</option>
+                <option value="6mm">6 mm</option>
+                <option value="8mm">8 mm</option>
+                <option value="10mm">10 mm</option>
+                <option value="12mm">12 mm</option>
+                <option value="14mm">14 mm</option>
+                <option value="16mm">16 mm</option>
+                <option value="19mm">19 mm</option>
+                <option value="22mm">22 mm</option>
+              </select>
+            </div>
+
+            <!-- Chain Color -->
+            <div class="form-group">
+              <label for="chain_color">Chain Color (for detection) *</label>
+              <select id="chain_color" required>
+                <option value="">-- Select Color --</option>
+                <option value="silver">Silver (Natural)</option>
+                <option value="gold">Gold (Zinc Plated)</option>
+                <option value="black">Black (Black Oxide)</option>
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+              </select>
+            </div>
+
+            <!-- Product Attribution -->
+            <div class="form-group">
+              <label for="product_attribution">Product Attribution (optional)</label>
+              <textarea id="product_attribution" rows="3" placeholder="e.g., Grade 80, DIN 5685, Customer: ABC Corp, Batch: 2024-001"></textarea>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-success btn-block">
+              ▶ Submit Order & Start
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="panel">
+        <div class="panel-title">Recent Orders</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Mode</th>
+              <th>Size</th>
+              <th>Color</th>
+              <th>Attribution</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTable">
+            <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">No orders yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/input.js"></script>
+</body>
+</html>

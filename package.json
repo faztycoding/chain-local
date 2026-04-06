@@ -1,0 +1,16 @@
+{
+  "name": "chain-local",
+  "version": "1.0.0",
+  "description": "Chain Counter & AI Defect Inspection - Localhost Prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "better-sqlite3": "^9.4.3",
+    "cors": "^2.8.5"
+  }
+}
