@@ -91,9 +91,9 @@ async function loadOrders() {
         <td>#${o.id}</td>
         <td>${getModeLabel(o.mode)}</td>
         <td>${o.chain_size}</td>
-        <td>${o.chain_color}</td>
+        <td>${getColorLabel(o.chain_color)}</td>
         <td>${o.product_attribution || '-'}</td>
-        <td><span class="badge ${o.status === 'running' ? 'badge-pass' : o.status === 'completed' ? 'badge-pass' : 'badge-defect'}">${o.status.toUpperCase()}</span></td>
+        <td><span class="badge ${o.status === 'running' ? 'badge-pass' : o.status === 'completed' ? 'badge-pass' : 'badge-defect'}">${getStatusLabel(o.status)}</span></td>
         <td>${o.created_at}</td>
       </tr>
     `).join('');
@@ -111,6 +111,29 @@ function getModeLabel(mode) {
     'both': 'นับข้อ + ตรวจตำหนิ'
   };
   return labels[mode] || mode;
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'pending': 'รอดำเนินการ',
+    'running': 'กำลังทำงาน',
+    'completed': 'เสร็จสิ้น',
+    'stopped': 'หยุดทำงาน',
+    'emergency': 'หยุดฉุกเฉิน'
+  };
+  return labels[status] || status;
+}
+
+function getColorLabel(color) {
+  const labels = {
+    'silver': 'เงิน',
+    'gold': 'ทอง',
+    'black': 'ดำ',
+    'red': 'แดง',
+    'blue': 'น้ำเงิน',
+    'green': 'เขียว'
+  };
+  return labels[color] || color;
 }
 
 // แสดงกล่องแจ้งเตือน (Toast) ที่มุมบนขวา

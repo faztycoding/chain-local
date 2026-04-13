@@ -33,7 +33,7 @@ socket.on('disconnect', () => {
 //   ไม่ต้องคอยถามซ้ำๆ (polling) เร็วกว่าและไม่เปลืองทรัพยากร
 socket.on('new_order', (order) => {
   currentOrderId = order.id;
-  addLog('คำสั่ง', `รับคำสั่งใหม่: #${order.id} | โหมด: ${order.mode} | ขนาด: ${order.chain_size} | สี: ${order.chain_color}`);
+  addLog('คำสั่ง', `รับคำสั่งใหม่: #${order.id} | โหมด: ${getModeLabel(order.mode)} | ขนาด: ${order.chain_size} | สี: ${getColorLabel(order.chain_color)}`);
   updateOrderDisplay(order);
   showToast(`รับคำสั่งใหม่ #${order.id} แล้ว!`, 'success');
 });
@@ -43,7 +43,7 @@ socket.on('order_status_changed', (order) => {
   if (order.id === currentOrderId) {
     updateOrderDisplay(order);
     updateSystemStatus(order.status);
-    addLog('สถานะ', `คำสั่ง #${order.id} เปลี่ยนสถานะเป็น: ${order.status.toUpperCase()}`);
+    addLog('สถานะ', `คำสั่ง #${order.id} เปลี่ยนสถานะเป็น: ${getStatusLabel(order.status)}`);
   }
 });
 
@@ -59,40 +59,11 @@ socket.on('detection_result', (data) => {
   if (order.id === currentOrderId || !currentOrderId) {
     currentOrderId = order.id;
     updateOrderDisplay(order);
-
-    // อัปเดตจำนวนข้อโซ่สะสม
-    document.getElementById('chainCount').textContent = order.total_chain_count;
-
-    // อัปเดตสถานะการตรวจจับ → เปลี่ยนสีตามผล (เขียว=ปกติ, แดง=ตำหนิ)
-    const detStatus = document.getElementById('detectionStatus');
-    if (inspection.defect_type === 'none') {
-      detStatus.textContent = 'ไม่พบตำหนิ';
-      detStatus.className = 'value green';
-    } else {
-      detStatus.textContent = 'พบตำหนิ!';
-      detStatus.className = 'value red';
-    }
-
-    // อัปเดตพาเนลผล AI
-    document.getElementById('defectType').textContent = inspection.defect_type === 'none' ? 'โซ่ปกติ' : inspection.defect_type;
-    document.getElementById('confidence').textContent = (inspection.confidence * 100).toFixed(1) + '%';
-    document.getElementById('detectedLink').textContent = inspection.chain_count > 0 ? inspection.chain_count + ' ข้อ' : '-';
-    document.getElementById('defectDetail').textContent = inspection.defect_detail || '-';
-    document.getElementById('lastUpdated').textContent = inspection.timestamp;
-
-    // อัปเดตรูปภาพถ้าฝั่ง AI ส่ง path มา
-    if (inspection.image_path) {
-      document.getElementById('aiImage').src = inspection.image_path;
-      document.getElementById('aiImage').style.display = 'block';
-      document.getElementById('aiImagePlaceholder').style.display = 'none';
-    }
-
-    // อัปเดตจำนวนตำหนิสะสม
-    document.getElementById('orderDefects').textContent = order.total_defect_count;
+    updateInspectionDisplay(inspection, order);
 
     // เพิ่มบันทึกใน Log
     const logType = inspection.defect_type === 'none' ? 'ผ่าน' : 'ตำหนิ';
-    addLog(logType, `จำนวน: ${inspection.chain_count} | ประเภท: ${inspection.defect_type} | ความมั่นใจ: ${(inspection.confidence * 100).toFixed(1)}%`);
+    addLog(logType, `จำนวน: ${inspection.chain_count} | ประเภท: ${getDefectLabel(inspection.defect_type)} | ความมั่นใจ: ${(inspection.confidence * 100).toFixed(1)}%`);
   }
 });
 
@@ -103,11 +74,42 @@ function updateOrderDisplay(order) {
   document.getElementById('orderId').textContent = '#' + order.id;
   document.getElementById('orderMode').textContent = getModeLabel(order.mode);
   document.getElementById('orderSize').textContent = order.chain_size;
-  document.getElementById('orderColor').textContent = order.chain_color;
+  document.getElementById('orderColor').textContent = getColorLabel(order.chain_color);
   document.getElementById('orderAttribution').textContent = order.product_attribution || '-';
   document.getElementById('orderDefects').textContent = order.total_defect_count;
   document.getElementById('chainCount').textContent = order.total_chain_count;
   updateSystemStatus(order.status);
+}
+
+function updateInspectionDisplay(inspection, order) {
+  document.getElementById('chainCount').textContent = order.total_chain_count;
+
+  const detStatus = document.getElementById('detectionStatus');
+  if (inspection.defect_type === 'none') {
+    detStatus.textContent = 'ไม่พบตำหนิ';
+    detStatus.className = 'value green';
+  } else {
+    detStatus.textContent = 'พบตำหนิ!';
+    detStatus.className = 'value red';
+  }
+
+  document.getElementById('defectType').textContent = inspection.defect_type === 'none' ? 'โซ่ปกติ' : getDefectLabel(inspection.defect_type);
+  document.getElementById('confidence').textContent = (inspection.confidence * 100).toFixed(1) + '%';
+  document.getElementById('detectedLink').textContent = inspection.chain_count > 0 ? inspection.chain_count + ' ข้อ' : '-';
+  document.getElementById('defectDetail').textContent = inspection.defect_detail || '-';
+  document.getElementById('lastUpdated').textContent = inspection.timestamp;
+
+  if (inspection.image_path) {
+    document.getElementById('aiImage').src = inspection.image_path;
+    document.getElementById('aiImage').style.display = 'block';
+    document.getElementById('aiImagePlaceholder').style.display = 'none';
+  } else {
+    document.getElementById('aiImage').src = '';
+    document.getElementById('aiImage').style.display = 'none';
+    document.getElementById('aiImagePlaceholder').style.display = 'block';
+  }
+
+  document.getElementById('orderDefects').textContent = order.total_defect_count;
 }
 
 // อัปเดตสถานะระบบบนการ์ดสถานะ
@@ -169,12 +171,30 @@ async function controlAction(status) {
 
     const data = await res.json();
     if (data.success) {
-      addLog('ควบคุม', `ส่งคำสั่ง ${status.toUpperCase()} สำหรับคำสั่ง #${currentOrderId}`);
-      showToast(`ระบบ ${status.toUpperCase()}`, status === 'running' ? 'success' : 'error');
+      addLog('ควบคุม', `ส่งคำสั่ง ${getStatusLabel(status)} สำหรับคำสั่ง #${currentOrderId}`);
+      showToast(`สถานะระบบ: ${getStatusLabel(status)}`, status === 'running' ? 'success' : 'error');
     }
   } catch (err) {
     showToast('ส่งคำสั่งไม่สำเร็จ', 'error');
     console.error(err);
+  }
+}
+
+async function loadCurrentOutput() {
+  try {
+    const res = await fetch('/api/output/current');
+    const data = await res.json();
+
+    if (!data.order) return;
+
+    currentOrderId = data.order.id;
+    updateOrderDisplay(data.order);
+
+    if (data.inspection) {
+      updateInspectionDisplay(data.inspection, data.order);
+    }
+  } catch (err) {
+    console.error('โหลดข้อมูลหน้าควบคุมไม่สำเร็จ:', err);
   }
 }
 
@@ -202,6 +222,40 @@ function getModeLabel(mode) {
   return labels[mode] || mode;
 }
 
+function getStatusLabel(status) {
+  const labels = {
+    'pending': 'รอดำเนินการ',
+    'running': 'กำลังทำงาน',
+    'completed': 'เสร็จสิ้น',
+    'stopped': 'หยุดทำงาน',
+    'emergency': 'หยุดฉุกเฉิน'
+  };
+  return labels[status] || status;
+}
+
+function getDefectLabel(defectType) {
+  const labels = {
+    'none': 'ผ่าน',
+    'scratch': 'รอยขีดข่วน',
+    'crack': 'รอยร้าว',
+    'rust': 'สนิม',
+    'deformation': 'รูปทรงผิดปกติ'
+  };
+  return labels[defectType] || defectType;
+}
+
+function getColorLabel(color) {
+  const labels = {
+    'silver': 'เงิน',
+    'gold': 'ทอง',
+    'black': 'ดำ',
+    'red': 'แดง',
+    'blue': 'น้ำเงิน',
+    'green': 'เขียว'
+  };
+  return labels[color] || color;
+}
+
 // แสดงกล่องแจ้งเตือน
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
@@ -211,3 +265,5 @@ function showToast(message, type = 'success') {
     toast.className = 'toast';
   }, 3000);
 }
+
+loadCurrentOutput();

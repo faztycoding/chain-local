@@ -39,6 +39,28 @@ const io = new Server(server, {
 // เริ่มต้นฐานข้อมูล → สร้างตาราง + View อัตโนมัติถ้ายังไม่มี
 const db = initDatabase();
 
+function getCurrentOrder() {
+  return db.prepare(`
+    SELECT * FROM orders
+    ORDER BY CASE WHEN status = 'completed' THEN 1 ELSE 0 END,
+             updated_at DESC,
+             created_at DESC,
+             id DESC
+    LIMIT 1
+  `).get() || null;
+}
+
+function getLatestInspectionForOrder(orderId) {
+  if (!orderId) return null;
+
+  return db.prepare(`
+    SELECT * FROM inspection_results
+    WHERE order_id = ?
+    ORDER BY timestamp DESC, id DESC
+    LIMIT 1
+  `).get(orderId) || null;
+}
+
 // Middleware → ตัวกลางที่ทำงานก่อน Request จะถึง Route
 // ทำไมต้องมี? เพราะ Express ต้องรู้วิธีอ่านข้อมูลก่อนจัดการ
 // cors()           → ให้ AI (Python) หรือโปรแกรมอื่นเรียก API ได้
@@ -228,6 +250,50 @@ app.get('/api/stats/daily', (req, res) => {
   }
 });
 
+app.get('/api/stats/weekly', (req, res) => {
+  try {
+    const data = db.prepare(`
+      SELECT
+        strftime('%Y-W%W', ir.timestamp) AS report_week,
+        MIN(DATE(ir.timestamp)) AS week_start_date,
+        MAX(DATE(ir.timestamp)) AS week_end_date,
+        COUNT(*) AS total_inspections,
+        SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
+        COUNT(*) - SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS pass_count,
+        ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
+        ROUND(AVG(ir.confidence) * 100, 2) AS avg_confidence_percent,
+        SUM(ir.chain_count) AS total_chains_counted
+      FROM inspection_results ir
+      GROUP BY strftime('%Y-W%W', ir.timestamp)
+      ORDER BY report_week DESC
+    `).all();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/stats/monthly', (req, res) => {
+  try {
+    const data = db.prepare(`
+      SELECT
+        strftime('%Y-%m', ir.timestamp) AS report_month,
+        COUNT(*) AS total_inspections,
+        SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
+        COUNT(*) - SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS pass_count,
+        ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
+        ROUND(AVG(ir.confidence) * 100, 2) AS avg_confidence_percent,
+        SUM(ir.chain_count) AS total_chains_counted
+      FROM inspection_results ir
+      GROUP BY strftime('%Y-%m', ir.timestamp)
+      ORDER BY report_month DESC
+    `).all();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ข้อมูลสำหรับกราฟ p-Chart (กราฟควบคุมคุณภาพ)
 // p-Chart คืออะไร? → กราฟที่ใช้ในงาน QA จริง ดูว่าสัดส่วนของเสียอยู่ในเกณฑ์ไหม
 app.get('/api/stats/pchart', (req, res) => {
@@ -287,6 +353,16 @@ app.get('/api/stats/history', (req, res) => {
   }
 });
 
+app.get('/api/output/current', (req, res) => {
+  try {
+    const order = getCurrentOrder();
+    const inspection = order ? getLatestInspectionForOrder(order.id) : null;
+    res.json({ order, inspection });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================
 // การเชื่อมต่อ Socket.io
 // ============================================================
@@ -301,11 +377,17 @@ app.get('/api/stats/history', (req, res) => {
 io.on('connection', (socket) => {
   console.log(`🔌 เชื่อมต่อใหม่: ${socket.id}`);
 
-  // เมื่อมีคนเปิดหน้า Output ใหม่ → ส่ง Order ที่กำลังทำงานให้ทันที
-  // ทำไมต้องมี? → ถ้าไม่ส่ง หน้าจอจะว่างเปล่าจนกว่าจะมี Order ใหม่
-  const activeOrder = db.prepare("SELECT * FROM orders WHERE status = 'running' ORDER BY created_at DESC LIMIT 1").get();
-  if (activeOrder) {
-    socket.emit('new_order', activeOrder);
+  const currentOrder = getCurrentOrder();
+  if (currentOrder) {
+    socket.emit('new_order', currentOrder);
+
+    const latestInspection = getLatestInspectionForOrder(currentOrder.id);
+    if (latestInspection) {
+      socket.emit('detection_result', {
+        inspection: latestInspection,
+        order: currentOrder
+      });
+    }
   }
 
   socket.on('disconnect', () => {

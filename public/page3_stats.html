@@ -15,8 +15,8 @@
       <a href="/page1_input.html" class="sidebar-btn">สั่งงานตรวจสอบ</a>
       <a href="/page2_output.html" class="sidebar-btn">หน้าจอควบคุม</a>
       <a href="/page3_stats.html" class="sidebar-btn active">สถิติการผลิต</a>
-      <a href="/page3_stats.html" class="sidebar-btn">แจ้งเตือน & ประวัติ</a>
-      <a href="#" class="sidebar-btn">ตั้งค่า / บำรุงรักษา</a>
+      <a href="/page3_stats.html?tab=history" class="sidebar-btn">แจ้งเตือน & ประวัติ</a>
+      <a href="/page4_settings.html" class="sidebar-btn">ตั้งค่า / บำรุงรักษา</a>
     </div>
 
     <!-- เนื้อหาหลัก -->
@@ -25,10 +25,12 @@
 
       <!-- แท็บเมนู -->
       <div class="nav-tabs">
-        <button class="nav-tab active" onclick="switchTab('overview')">ภาพรวม</button>
-        <button class="nav-tab" onclick="switchTab('pchart')">กราฟควบคุม (p-chart)</button>
-        <button class="nav-tab" onclick="switchTab('daily')">รายงานประจำวัน</button>
-        <button class="nav-tab" onclick="switchTab('history')">ประวัติการตรวจสอบ</button>
+        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview', this)">ภาพรวม</button>
+        <button class="nav-tab" data-tab="pchart" onclick="switchTab('pchart', this)">กราฟควบคุม (p-chart)</button>
+        <button class="nav-tab" data-tab="daily" onclick="switchTab('daily', this)">รายงานประจำวัน</button>
+        <button class="nav-tab" data-tab="weekly" onclick="switchTab('weekly', this)">รายงานรายสัปดาห์</button>
+        <button class="nav-tab" data-tab="monthly" onclick="switchTab('monthly', this)">รายงานรายเดือน</button>
+        <button class="nav-tab" data-tab="history" onclick="switchTab('history', this)">ประวัติการตรวจสอบ</button>
       </div>
 
       <!-- แท็บ: ภาพรวม -->
@@ -148,6 +150,51 @@
             </thead>
             <tbody id="dailyTable">
               <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-weekly">
+        <div class="panel">
+          <div class="panel-title">รายงานสรุปรายสัปดาห์</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>สัปดาห์</th>
+                <th>ช่วงวันที่</th>
+                <th>ตรวจทั้งหมด</th>
+                <th>ผ่าน</th>
+                <th>ตำหนิ</th>
+                <th>อัตราตำหนิ (%)</th>
+                <th>ความมั่นใจเฉลี่ย (%)</th>
+                <th>โซ่ที่นับได้</th>
+              </tr>
+            </thead>
+            <tbody id="weeklyTable">
+              <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-monthly">
+        <div class="panel">
+          <div class="panel-title">รายงานสรุปรายเดือน</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>เดือน</th>
+                <th>ตรวจทั้งหมด</th>
+                <th>ผ่าน</th>
+                <th>ตำหนิ</th>
+                <th>อัตราตำหนิ (%)</th>
+                <th>ความมั่นใจเฉลี่ย (%)</th>
+                <th>โซ่ที่นับได้</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTable">
+              <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
             </tbody>
           </table>
         </div>

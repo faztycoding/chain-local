@@ -395,6 +395,7 @@ body {
 
 .nav-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
   margin-bottom: 20px;
   border-bottom: 2px solid #ddd;

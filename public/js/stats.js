@@ -9,15 +9,21 @@
 
 // สลับแท็บ - เมื่อคลิกแท็บใด จะซ่อนเนื้อหาเดิม + แสดงเนื้อหาใหม่
 // ทำไมใช้ classList? → เพิ่ม/ลบ CSS class ได้โดยไม่กระทบ class อื่น
-function switchTab(tabName) {
+function switchTab(tabName, button = null) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tabName).classList.add('active');
-  event.target.classList.add('active');
+  const targetTab = document.getElementById('tab-' + tabName);
+  if (!targetTab) return;
+  targetTab.classList.add('active');
+
+  const targetButton = button || document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+  if (targetButton) targetButton.classList.add('active');
 
   // โหลดข้อมูลของแต่ละแท็บเมื่อคลิกเปิด (ไม่โหลดทั้งหมดตั้งแต่แรก เพื่อประหยัดเวลา)
   if (tabName === 'pchart') loadPchartData();
   if (tabName === 'daily') loadDailyReport();
+  if (tabName === 'weekly') loadWeeklyReport();
+  if (tabName === 'monthly') loadMonthlyReport();
   if (tabName === 'history') loadHistory();
 }
 
@@ -29,6 +35,49 @@ let chartDailyCount = null;
 let chartDefectRatio = null;
 let chartConfidenceTrend = null;
 let chartPchart = null;
+
+function getModeLabel(mode) {
+  const labels = {
+    'count': 'นับข้อโซ่',
+    'defect': 'ตรวจจับตำหนิ',
+    'both': 'นับข้อ + ตรวจตำหนิ'
+  };
+  return labels[mode] || mode;
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'pending': 'รอดำเนินการ',
+    'running': 'กำลังทำงาน',
+    'completed': 'เสร็จสิ้น',
+    'stopped': 'หยุดทำงาน',
+    'emergency': 'หยุดฉุกเฉิน'
+  };
+  return labels[status] || status;
+}
+
+function getDefectLabel(defectType) {
+  const labels = {
+    'none': 'ผ่าน',
+    'scratch': 'รอยขีดข่วน',
+    'crack': 'รอยร้าว',
+    'rust': 'สนิม',
+    'deformation': 'รูปทรงผิดปกติ'
+  };
+  return labels[defectType] || defectType;
+}
+
+function getColorLabel(color) {
+  const labels = {
+    'silver': 'เงิน',
+    'gold': 'ทอง',
+    'black': 'ดำ',
+    'red': 'แดง',
+    'blue': 'น้ำเงิน',
+    'green': 'เขียว'
+  };
+  return labels[color] || color;
+}
 
 // โหลดข้อมูลภาพรวมจาก API หลายเส้นทาง
 // ทำไมเรียก API หลายตัว? → เพราะต้องการข้อมูลจากหลายมุมมารวมเป็นภาพรวม
@@ -100,9 +149,9 @@ function renderDefectByColor(data) {
   chartDefectByColor = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: data.map(d => d.chain_color),
+      labels: data.map(d => getColorLabel(d.chain_color)),
       datasets: [{
-        label: 'Defect Rate (%)',
+        label: 'อัตราตำหนิ (%)',
         data: data.map(d => d.defect_rate_percent),
         backgroundColor: data.map(d => colorMap[d.chain_color] || '#2c3e6b'),
         borderRadius: 4
@@ -112,7 +161,7 @@ function renderDefectByColor(data) {
       responsive: true,
       plugins: { legend: { display: false } },
       scales: {
-        y: { beginAtZero: true, title: { display: true, text: 'Defect Rate (%)' } }
+        y: { beginAtZero: true, title: { display: true, text: 'อัตราตำหนิ (%)' } }
       }
     }
   });
@@ -141,7 +190,7 @@ function renderDailyCount(data) {
       labels: dates,
       datasets: [
         {
-          label: 'Total Inspections',
+          label: 'จำนวนตรวจทั้งหมด',
           data: dates.map(d => dateMap[d].total),
           borderColor: '#2c3e6b',
           backgroundColor: 'rgba(44,62,107,0.1)',
@@ -149,7 +198,7 @@ function renderDailyCount(data) {
           tension: 0.3
         },
         {
-          label: 'Defects',
+          label: 'จำนวนตำหนิ',
           data: dates.map(d => dateMap[d].defect),
           borderColor: '#e74c3c',
           backgroundColor: 'rgba(231,76,60,0.1)',
@@ -174,7 +223,7 @@ function renderDefectRatio(defects, passes) {
   chartDefectRatio = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['Pass', 'Defect'],
+      labels: ['ผ่าน', 'ตำหนิ'],
       datasets: [{
         data: [passes, defects],
         backgroundColor: ['#27ae60', '#e74c3c'],
@@ -212,7 +261,7 @@ function renderConfidenceTrend(data) {
     data: {
       labels: dates,
       datasets: [{
-        label: 'Avg Confidence (%)',
+        label: 'ความมั่นใจเฉลี่ย (%)',
         data: avgValues,
         borderColor: '#f39c12',
         backgroundColor: 'rgba(243,156,18,0.1)',
@@ -223,7 +272,7 @@ function renderConfidenceTrend(data) {
     options: {
       responsive: true,
       scales: {
-        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Confidence (%)' } }
+        y: { beginAtZero: true, max: 100, title: { display: true, text: 'ความมั่นใจ (%)' } }
       }
     }
   });
@@ -266,7 +315,7 @@ async function loadPchartData() {
         labels: dates,
         datasets: [
           {
-            label: 'Proportion (p)',
+            label: 'สัดส่วนของเสีย (p)',
             data: proportions,
             borderColor: '#2c3e6b',
             backgroundColor: 'rgba(44,62,107,0.1)',
@@ -276,7 +325,7 @@ async function loadPchartData() {
             tension: 0
           },
           {
-            label: 'p-bar (Center Line)',
+            label: 'ค่าเฉลี่ยกลาง (p-bar)',
             data: dates.map(() => pBar.toFixed(4)),
             borderColor: '#27ae60',
             borderDash: [5, 5],
@@ -284,7 +333,7 @@ async function loadPchartData() {
             fill: false
           },
           {
-            label: 'UCL (Upper Control Limit)',
+            label: 'UCL (ขีดควบคุมบน)',
             data: dates.map(() => ucl.toFixed(4)),
             borderColor: '#e74c3c',
             borderDash: [10, 5],
@@ -292,7 +341,7 @@ async function loadPchartData() {
             fill: false
           },
           {
-            label: 'LCL (Lower Control Limit)',
+            label: 'LCL (ขีดควบคุมล่าง)',
             data: dates.map(() => lcl.toFixed(4)),
             borderColor: '#e74c3c',
             borderDash: [10, 5],
@@ -309,10 +358,10 @@ async function loadPchartData() {
         scales: {
           y: {
             beginAtZero: true,
-            title: { display: true, text: 'Proportion Defective (p)' }
+            title: { display: true, text: 'สัดส่วนของเสีย (p)' }
           },
           x: {
-            title: { display: true, text: 'Sample Date' }
+            title: { display: true, text: 'วันที่เก็บตัวอย่าง' }
           }
         }
       }
@@ -328,7 +377,7 @@ async function loadPchartData() {
           <td>${d.sample_size}</td>
           <td>${d.defect_count}</td>
           <td>${d.defect_proportion.toFixed(4)}</td>
-          <td><span class="badge ${outOfControl ? 'badge-defect' : 'badge-pass'}">${outOfControl ? 'OUT OF CONTROL' : 'IN CONTROL'}</span></td>
+          <td><span class="badge ${outOfControl ? 'badge-defect' : 'badge-pass'}">${outOfControl ? 'เกินขีดควบคุม' : 'อยู่ในขีดควบคุม'}</span></td>
         </tr>
       `;
     }).join('');
@@ -347,16 +396,16 @@ async function loadDailyReport() {
 
     const tbody = document.getElementById('dailyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
       return;
     }
 
     tbody.innerHTML = data.map(d => `
       <tr>
         <td>${d.report_date}</td>
-        <td>${d.chain_color}</td>
+        <td>${getColorLabel(d.chain_color)}</td>
         <td>${d.chain_size}</td>
-        <td>${d.mode}</td>
+        <td>${getModeLabel(d.mode)}</td>
         <td>${d.total_inspections}</td>
         <td>${d.pass_count}</td>
         <td>${d.defect_count}</td>
@@ -370,6 +419,61 @@ async function loadDailyReport() {
   }
 }
 
+async function loadWeeklyReport() {
+  try {
+    const res = await fetch('/api/stats/weekly');
+    const data = await res.json();
+
+    const tbody = document.getElementById('weeklyTable');
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(d => `
+      <tr>
+        <td>${d.report_week}</td>
+        <td>${d.week_start_date} ถึง ${d.week_end_date}</td>
+        <td>${d.total_inspections}</td>
+        <td>${d.pass_count}</td>
+        <td>${d.defect_count}</td>
+        <td>${d.defect_rate_percent}%</td>
+        <td>${d.avg_confidence_percent}%</td>
+        <td>${d.total_chains_counted}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('โหลดรายงานรายสัปดาห์ไม่สำเร็จ:', err);
+  }
+}
+
+async function loadMonthlyReport() {
+  try {
+    const res = await fetch('/api/stats/monthly');
+    const data = await res.json();
+
+    const tbody = document.getElementById('monthlyTable');
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(d => `
+      <tr>
+        <td>${d.report_month}</td>
+        <td>${d.total_inspections}</td>
+        <td>${d.pass_count}</td>
+        <td>${d.defect_count}</td>
+        <td>${d.defect_rate_percent}%</td>
+        <td>${d.avg_confidence_percent}%</td>
+        <td>${d.total_chains_counted}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('โหลดรายงานรายเดือนไม่สำเร็จ:', err);
+  }
+}
+
 // ---- ประวัติการตรวจสอบ ----
 
 async function loadHistory() {
@@ -379,7 +483,7 @@ async function loadHistory() {
 
     const tbody = document.getElementById('historyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
       return;
     }
 
@@ -388,12 +492,12 @@ async function loadHistory() {
         <td>#${d.inspection_id}</td>
         <td>#${d.order_id}</td>
         <td>${d.timestamp}</td>
-        <td>${d.chain_color}</td>
+        <td>${getColorLabel(d.chain_color)}</td>
         <td>${d.chain_size}</td>
         <td>${d.chain_count}</td>
-        <td><span class="badge ${d.defect_type === 'none' ? 'badge-pass' : 'badge-defect'}">${d.defect_type === 'none' ? 'PASS' : d.defect_type.toUpperCase()}</span></td>
+        <td><span class="badge ${d.defect_type === 'none' ? 'badge-pass' : 'badge-defect'}">${getDefectLabel(d.defect_type)}</span></td>
         <td>${(d.confidence * 100).toFixed(1)}%</td>
-        <td>${d.order_status}</td>
+        <td>${getStatusLabel(d.order_status)}</td>
       </tr>
     `).join('');
   } catch (err) {
@@ -404,3 +508,8 @@ async function loadHistory() {
 // ---- เริ่มทำงาน ----
 // โหลดภาพรวมตอนเปิดหน้า Stats
 loadOverview();
+
+const initialTab = new URLSearchParams(window.location.search).get('tab');
+if (initialTab && ['overview', 'pchart', 'daily', 'weekly', 'monthly', 'history'].includes(initialTab) && initialTab !== 'overview') {
+  switchTab(initialTab);
+}

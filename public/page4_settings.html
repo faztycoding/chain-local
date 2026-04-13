@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบนับข้อโซ่ - ตั้งค่าและบำรุงรักษา</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <div class="sidebar">
+      <h3>เมนูระบบ HMI</h3>
+      <a href="/page1_input.html" class="sidebar-btn">สั่งงานตรวจสอบ</a>
+      <a href="/page2_output.html" class="sidebar-btn">หน้าจอควบคุม</a>
+      <a href="/page3_stats.html" class="sidebar-btn">สถิติการผลิต</a>
+      <a href="/page3_stats.html?tab=history" class="sidebar-btn">แจ้งเตือน & ประวัติ</a>
+      <a href="/page4_settings.html" class="sidebar-btn active">ตั้งค่า / บำรุงรักษา</a>
+    </div>
+
+    <div class="main-content">
+      <h1 class="page-title">ตั้งค่าระบบ & บำรุงรักษา</h1>
+      <p style="color:#888; margin-bottom:25px;">หน้านี้ใช้สำหรับตรวจสอบสถานะระบบและข้อมูลที่จำเป็นสำหรับการดูแลระบบต้นแบบในหน้างาน</p>
+
+      <div class="panel">
+        <div class="panel-title">ข้อมูลระบบ</div>
+        <table class="data-table">
+          <tbody>
+            <tr>
+              <th style="width:35%;">เซิร์ฟเวอร์หลัก</th>
+              <td>Node.js + Express บนเครื่องภายในหน้างาน</td>
+            </tr>
+            <tr>
+              <th>ฐานข้อมูล</th>
+              <td>SQLite ไฟล์ <code>chain_data.db</code></td>
+            </tr>
+            <tr>
+              <th>พอร์ตใช้งาน</th>
+              <td><code>http://localhost:3000</code></td>
+            </tr>
+            <tr>
+              <th>จุดเชื่อมต่อ AI</th>
+              <td><code>POST /api/detect</code></td>
+            </tr>
+            <tr>
+              <th>การส่งออกข้อมูล</th>
+              <td><code>GET /api/stats/export</code> และ Views สำหรับ Power BI</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">รายการตรวจสอบก่อนใช้งาน</div>
+        <table class="data-table">
+          <tbody>
+            <tr>
+              <th style="width:35%;">1. เปิดเซิร์ฟเวอร์</th>
+              <td>รัน <code>npm start</code> แล้วตรวจว่าหน้าเว็บเปิดได้ทั้ง 4 หน้า</td>
+            </tr>
+            <tr>
+              <th>2. ตรวจคำสั่งล่าสุด</th>
+              <td>เปิดหน้า Input และหน้า Output เพื่อดูว่า order ล่าสุดขึ้นตรงกัน</td>
+            </tr>
+            <tr>
+              <th>3. ตรวจการเชื่อมต่อ AI</th>
+              <td>ให้ฝั่ง YOLOv8 ยิงข้อมูลเข้า <code>/api/detect</code> แล้วดูผลที่หน้า Output</td>
+            </tr>
+            <tr>
+              <th>4. ตรวจรายงาน</th>
+              <td>เปิดหน้า Stats เพื่อตรวจภาพรวม รายวัน รายสัปดาห์ รายเดือน และประวัติ</td>
+            </tr>
+            <tr>
+              <th>5. สำรองข้อมูล</th>
+              <td>คัดลอกไฟล์ <code>chain_data.db</code> ออกเก็บตามรอบงาน</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">หมายเหตุการใช้งาน</div>
+        <div style="color:#555; line-height:1.8;">
+          <p>ปุ่ม เริ่มทำงาน / หยุดทำงาน / หยุดฉุกเฉิน ยังเป็นโหมดจำลองสำหรับเดโมและทดสอบลำดับการทำงานเท่านั้น</p>
+          <p>หากต้องต่อกล้องหรือเครื่องจักรจริง ให้ใช้หน้าเว็บชุดนี้เป็นฐาน แล้วเพิ่มส่วนเชื่อมต่อฮาร์ดแวร์แยกภายหลัง</p>
+          <p>หากต้องการวิเคราะห์เชิงลึกเพิ่มเติม ให้เชื่อม Power BI เข้ากับ SQLite หรือ API ส่งออกที่ระบบเตรียมไว้</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
