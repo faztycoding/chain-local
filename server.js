@@ -39,6 +39,10 @@ const io = new Server(server, {
 // เริ่มต้นฐานข้อมูล → สร้างตาราง + View อัตโนมัติถ้ายังไม่มี
 const db = initDatabase();
 
+// ดึง order ที่ "เหมาะสมที่สุด" ให้แสดงบนหน้า Output
+// ตรรกะ: เอา order ที่ยังไม่เสร็จก่อน (running > pending > stopped)
+//         ถ้าเสร็จหมดแล้ว ก็เอาอันที่อัปเดตล่าสุด
+// ทำไมไม่เอาแค่อันล่าสุด? → เพราะถ้ามี order ค้างอยู่ ควรโชว์อันนั้นก่อน
 function getCurrentOrder() {
   return db.prepare(`
     SELECT * FROM orders
@@ -50,6 +54,8 @@ function getCurrentOrder() {
   `).get() || null;
 }
 
+// ดึงผลตรวจล่าสุดของ order นั้น → ใช้แสดงรูป+ข้อมูลตำหนิบนหน้า Output
+// ทำไมเรียงตาม timestamp DESC? → เพราะ 1 order มีผลตรวจหลายครั้ง เอาล่าสุดสุด
 function getLatestInspectionForOrder(orderId) {
   if (!orderId) return null;
 
@@ -353,10 +359,28 @@ app.get('/api/stats/history', (req, res) => {
   }
 });
 
+// --- API สำหรับหน้า Output ---
+
+// ดึง order ปัจจุบัน + ผลตรวจล่าสุด → ใช้ตอนเปิดหน้า Output หรือ refresh
+// ทำไมต้องมี? → เพราะ Socket.io ส่งแค่ "ข้อมูลใหม่" ถ้า refresh หน้า ข้อมูลจะหาย
+//   API นี้ช่วยโหลดข้อมูลล่าสุดกลับมาโดยไม่ต้องรอ event ใหม่
 app.get('/api/output/current', (req, res) => {
   try {
     const order = getCurrentOrder();
     const inspection = order ? getLatestInspectionForOrder(order.id) : null;
+    res.json({ order, inspection });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ดึง order + ผลตรวจตาม id ที่เลือก → ใช้ตอนเลือก order จาก dropdown
+// ทำไมต้องมี? → เพราะ dropdown ให้เลือกดูคำสั่งเก่าได้ ไม่ใช่แค่อันล่าสุด
+app.get('/api/output/:id', (req, res) => {
+  try {
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const inspection = getLatestInspectionForOrder(order.id);
     res.json({ order, inspection });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -377,6 +401,8 @@ app.get('/api/output/current', (req, res) => {
 io.on('connection', (socket) => {
   console.log(`🔌 เชื่อมต่อใหม่: ${socket.id}`);
 
+  // ส่งข้อมูลล่าสุดให้คนที่เพิ่งเปิดหน้าเว็บ → ไม่ต้องรอ event ใหม่
+  // ทำไมต้องทำ? → สมมติคนเปิดหน้า Output มาทีหลัง ถ้าไม่ส่งให้เลย เขาจะเห็นหน้าว่าง
   const currentOrder = getCurrentOrder();
   if (currentOrder) {
     socket.emit('new_order', currentOrder);

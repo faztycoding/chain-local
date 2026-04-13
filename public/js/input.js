@@ -79,7 +79,7 @@ async function loadOrders() {
     const tbody = document.getElementById('ordersTable');
 
     if (orders.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีคำสั่งตรวจสอบ</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ระบบยังไม่เคยสร้างคำสั่งตรวจสอบ ให้เริ่มใช้งานโดยกรอกฟอร์มด้านบน</td></tr>';
       return;
     }
 

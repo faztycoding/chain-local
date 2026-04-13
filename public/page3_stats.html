@@ -21,7 +21,42 @@
 
     <!-- เนื้อหาหลัก -->
     <div class="main-content">
-      <h1 class="page-title">สถิติการผลิต & แดชบอร์ด QA</h1>
+      <div class="page-header">
+        <div>
+          <div class="page-kicker">แดชบอร์ดวิเคราะห์คุณภาพ</div>
+          <h1 class="page-title">สถิติการผลิต & แดชบอร์ด QA</h1>
+          <p class="page-subtitle">ดูภาพรวมการตรวจสอบ, แนวโน้มตำหนิ, และรายงานในหลายช่วงเวลา</p>
+        </div>
+        <div class="hero-pills">
+          <div class="hero-pill">
+            <span>ข้อมูลสรุป</span>
+            <strong>ภาพรวมรายงานหลายมุม</strong>
+          </div>
+          <div class="hero-pill">
+            <span>เหมาะกับ</span>
+            <strong>เดโม, QA และส่งต่อ BI</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-grid">
+        <div class="mini-card">
+          <span>ภาพรวม</span>
+          <strong>ดูรายงานหลายมุมในหน้าเดียว</strong>
+          <p>สรุปตัวเลขสำคัญ, กราฟ, และประวัติในหน้าเดียว</p>
+        </div>
+        <div class="mini-card">
+          <span>วิเคราะห์</span>
+          <strong>เช็กแนวโน้มรายวันถึงรายเดือน</strong>
+          <p>เช็กแนวโน้มคุณภาพรายวันถึงรายเดือน</p>
+        </div>
+        <div class="mini-card">
+          <span>ต่อยอด</span>
+          <strong>พร้อมส่งต่อ BI และสรุปงาน</strong>
+          <p>พร้อมส่งต่อ Power BI หรือรายงานจริงได้</p>
+        </div>
+      </div>
+
 
       <!-- แท็บเมนู -->
       <div class="nav-tabs">
@@ -58,6 +93,15 @@
           </div>
         </div>
 
+        <div class="empty-state-card" id="overviewFirstUseState">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-title">ยังไม่มีข้อมูลสถิติ</div>
+          <div class="empty-state-text">สร้างคำสั่งและส่งผลตรวจจาก AI ก่อน แล้วกราฟและรายงานจะเริ่มแสดงที่นี่</div>
+          <div class="empty-state-actions">
+            <a href="/page1_input.html" class="btn btn-primary">ไปหน้าสั่งงานตรวจสอบ</a>
+          </div>
+        </div>
+
         <div class="stats-grid">
           <div class="chart-box">
             <h3>อัตราตำหนิแยกตามสีโซ่</h3>
@@ -91,20 +135,22 @@
 
         <div class="panel">
           <div class="panel-title">ตารางข้อมูล p-Chart</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th>จำนวนตัวอย่าง (n)</th>
-                <th>จำนวนตำหนิ</th>
-                <th>สัดส่วน (p)</th>
-                <th>สถานะ</th>
-              </tr>
-            </thead>
-            <tbody id="pchartTable">
-              <tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>วันที่</th>
+                  <th>จำนวนตัวอย่าง (n)</th>
+                  <th>จำนวนตำหนิ</th>
+                  <th>สัดส่วน (p)</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="pchartTable">
+                <tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- บทวิเคราะห์ -->
@@ -133,70 +179,76 @@
       <div class="tab-content" id="tab-daily">
         <div class="panel">
           <div class="panel-title">รายงานสรุปประจำวัน (QA)</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th>สี</th>
-                <th>ขนาด</th>
-                <th>โหมด</th>
-                <th>ตรวจทั้งหมด</th>
-                <th>ผ่าน</th>
-                <th>ตำหนิ</th>
-                <th>อัตราตำหนิ (%)</th>
-                <th>ความมั่นใจเฉลี่ย (%)</th>
-                <th>โซ่ที่นับได้</th>
-              </tr>
-            </thead>
-            <tbody id="dailyTable">
-              <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>วันที่</th>
+                  <th>สี</th>
+                  <th>ขนาด</th>
+                  <th>โหมด</th>
+                  <th>ตรวจทั้งหมด</th>
+                  <th>ผ่าน</th>
+                  <th>ตำหนิ</th>
+                  <th>อัตราตำหนิ (%)</th>
+                  <th>ความมั่นใจเฉลี่ย (%)</th>
+                  <th>โซ่ที่นับได้</th>
+                </tr>
+              </thead>
+              <tbody id="dailyTable">
+                <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <div class="tab-content" id="tab-weekly">
         <div class="panel">
           <div class="panel-title">รายงานสรุปรายสัปดาห์</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>สัปดาห์</th>
-                <th>ช่วงวันที่</th>
-                <th>ตรวจทั้งหมด</th>
-                <th>ผ่าน</th>
-                <th>ตำหนิ</th>
-                <th>อัตราตำหนิ (%)</th>
-                <th>ความมั่นใจเฉลี่ย (%)</th>
-                <th>โซ่ที่นับได้</th>
-              </tr>
-            </thead>
-            <tbody id="weeklyTable">
-              <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>สัปดาห์</th>
+                  <th>ช่วงวันที่</th>
+                  <th>ตรวจทั้งหมด</th>
+                  <th>ผ่าน</th>
+                  <th>ตำหนิ</th>
+                  <th>อัตราตำหนิ (%)</th>
+                  <th>ความมั่นใจเฉลี่ย (%)</th>
+                  <th>โซ่ที่นับได้</th>
+                </tr>
+              </thead>
+              <tbody id="weeklyTable">
+                <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <div class="tab-content" id="tab-monthly">
         <div class="panel">
           <div class="panel-title">รายงานสรุปรายเดือน</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>เดือน</th>
-                <th>ตรวจทั้งหมด</th>
-                <th>ผ่าน</th>
-                <th>ตำหนิ</th>
-                <th>อัตราตำหนิ (%)</th>
-                <th>ความมั่นใจเฉลี่ย (%)</th>
-                <th>โซ่ที่นับได้</th>
-              </tr>
-            </thead>
-            <tbody id="monthlyTable">
-              <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>เดือน</th>
+                  <th>ตรวจทั้งหมด</th>
+                  <th>ผ่าน</th>
+                  <th>ตำหนิ</th>
+                  <th>อัตราตำหนิ (%)</th>
+                  <th>ความมั่นใจเฉลี่ย (%)</th>
+                  <th>โซ่ที่นับได้</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyTable">
+                <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -204,24 +256,26 @@
       <div class="tab-content" id="tab-history">
         <div class="panel">
           <div class="panel-title">ประวัติการตรวจสอบล่าสุด</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>รหัส</th>
-                <th>คำสั่ง</th>
-                <th>เวลา</th>
-                <th>สี</th>
-                <th>ขนาด</th>
-                <th>จำนวนข้อ</th>
-                <th>ประเภทตำหนิ</th>
-                <th>ความมั่นใจ</th>
-                <th>สถานะ</th>
-              </tr>
-            </thead>
-            <tbody id="historyTable">
-              <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>รหัส</th>
+                  <th>คำสั่ง</th>
+                  <th>เวลา</th>
+                  <th>สี</th>
+                  <th>ขนาด</th>
+                  <th>จำนวนข้อ</th>
+                  <th>ประเภทตำหนิ</th>
+                  <th>ความมั่นใจ</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="historyTable">
+                <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

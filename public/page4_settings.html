@@ -18,63 +18,100 @@
     </div>
 
     <div class="main-content">
-      <h1 class="page-title">ตั้งค่าระบบ & บำรุงรักษา</h1>
-      <p style="color:#888; margin-bottom:25px;">หน้านี้ใช้สำหรับตรวจสอบสถานะระบบและข้อมูลที่จำเป็นสำหรับการดูแลระบบต้นแบบในหน้างาน</p>
+      <div class="page-header">
+        <div>
+          <div class="page-kicker">ข้อมูลระบบและการดูแลหน้างาน</div>
+          <h1 class="page-title">ตั้งค่าระบบ & บำรุงรักษา</h1>
+          <p class="page-subtitle">หน้านี้ใช้ตรวจสอบข้อมูลระบบ, จุดเชื่อมต่อสำคัญ, และรายการเช็กก่อนใช้งาน เพื่อให้การเดโมหรือดูแลระบบต้นแบบในหน้างานทำได้ง่ายขึ้น</p>
+        </div>
+        <div class="hero-pills">
+          <div class="hero-pill">
+            <span>การใช้งาน</span>
+            <strong>ตรวจสถานะก่อนเดโม</strong>
+          </div>
+          <div class="hero-pill">
+            <span>โฟกัส</span>
+            <strong>ดูแลง่าย อธิบายต่อได้</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-grid">
+        <div class="mini-card">
+          <span>หน้าที่</span>
+          <strong>รวมข้อมูลระบบไว้หน้าเดียว</strong>
+          <p>ใช้เช็ก server, database, API และข้อมูลที่จำเป็นก่อนใช้งานหรือเดโม</p>
+        </div>
+        <div class="mini-card">
+          <span>บำรุงรักษา</span>
+          <strong>มี checklist พร้อมใช้งาน</strong>
+          <p>ช่วยให้ดูแลระบบต้นแบบหน้างานได้ง่ายขึ้นโดยไม่ต้องเปิดหลายไฟล์</p>
+        </div>
+        <div class="mini-card">
+          <span>เหมาะกับ</span>
+          <strong>ส่งต่อทีมและอธิบายลูกค้า</strong>
+          <p>ใช้อธิบายขอบเขตระบบและสิ่งที่ต้องเช็กก่อนเริ่มเดโมได้ชัดเจน</p>
+        </div>
+      </div>
 
       <div class="panel">
         <div class="panel-title">ข้อมูลระบบ</div>
-        <table class="data-table">
-          <tbody>
-            <tr>
-              <th style="width:35%;">เซิร์ฟเวอร์หลัก</th>
-              <td>Node.js + Express บนเครื่องภายในหน้างาน</td>
-            </tr>
-            <tr>
-              <th>ฐานข้อมูล</th>
-              <td>SQLite ไฟล์ <code>chain_data.db</code></td>
-            </tr>
-            <tr>
-              <th>พอร์ตใช้งาน</th>
-              <td><code>http://localhost:3000</code></td>
-            </tr>
-            <tr>
-              <th>จุดเชื่อมต่อ AI</th>
-              <td><code>POST /api/detect</code></td>
-            </tr>
-            <tr>
-              <th>การส่งออกข้อมูล</th>
-              <td><code>GET /api/stats/export</code> และ Views สำหรับ Power BI</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <th style="width:35%;">เซิร์ฟเวอร์หลัก</th>
+                <td>Node.js + Express บนเครื่องภายในหน้างาน</td>
+              </tr>
+              <tr>
+                <th>ฐานข้อมูล</th>
+                <td>SQLite ไฟล์ <code>chain_data.db</code></td>
+              </tr>
+              <tr>
+                <th>พอร์ตใช้งาน</th>
+                <td><code>http://localhost:3000</code></td>
+              </tr>
+              <tr>
+                <th>จุดเชื่อมต่อ AI</th>
+                <td><code>POST /api/detect</code></td>
+              </tr>
+              <tr>
+                <th>การส่งออกข้อมูล</th>
+                <td><code>GET /api/stats/export</code> และ Views สำหรับ Power BI</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="panel">
         <div class="panel-title">รายการตรวจสอบก่อนใช้งาน</div>
-        <table class="data-table">
-          <tbody>
-            <tr>
-              <th style="width:35%;">1. เปิดเซิร์ฟเวอร์</th>
-              <td>รัน <code>npm start</code> แล้วตรวจว่าหน้าเว็บเปิดได้ทั้ง 4 หน้า</td>
-            </tr>
-            <tr>
-              <th>2. ตรวจคำสั่งล่าสุด</th>
-              <td>เปิดหน้า Input และหน้า Output เพื่อดูว่า order ล่าสุดขึ้นตรงกัน</td>
-            </tr>
-            <tr>
-              <th>3. ตรวจการเชื่อมต่อ AI</th>
-              <td>ให้ฝั่ง YOLOv8 ยิงข้อมูลเข้า <code>/api/detect</code> แล้วดูผลที่หน้า Output</td>
-            </tr>
-            <tr>
-              <th>4. ตรวจรายงาน</th>
-              <td>เปิดหน้า Stats เพื่อตรวจภาพรวม รายวัน รายสัปดาห์ รายเดือน และประวัติ</td>
-            </tr>
-            <tr>
-              <th>5. สำรองข้อมูล</th>
-              <td>คัดลอกไฟล์ <code>chain_data.db</code> ออกเก็บตามรอบงาน</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <th style="width:35%;">1. เปิดเซิร์ฟเวอร์</th>
+                <td>รัน <code>npm start</code> แล้วตรวจว่าหน้าเว็บเปิดได้ทั้ง 4 หน้า</td>
+              </tr>
+              <tr>
+                <th>2. ตรวจคำสั่งล่าสุด</th>
+                <td>เปิดหน้า Input และหน้า Output เพื่อดูว่า order ล่าสุดขึ้นตรงกัน</td>
+              </tr>
+              <tr>
+                <th>3. ตรวจการเชื่อมต่อ AI</th>
+                <td>ให้ฝั่ง YOLOv8 ยิงข้อมูลเข้า <code>/api/detect</code> แล้วดูผลที่หน้า Output</td>
+              </tr>
+              <tr>
+                <th>4. ตรวจรายงาน</th>
+                <td>เปิดหน้า Stats เพื่อตรวจภาพรวม รายวัน รายสัปดาห์ รายเดือน และประวัติ</td>
+              </tr>
+              <tr>
+                <th>5. สำรองข้อมูล</th>
+                <td>คัดลอกไฟล์ <code>chain_data.db</code> ออกเก็บตามรอบงาน</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="panel">
@@ -84,6 +121,12 @@
           <p>หากต้องต่อกล้องหรือเครื่องจักรจริง ให้ใช้หน้าเว็บชุดนี้เป็นฐาน แล้วเพิ่มส่วนเชื่อมต่อฮาร์ดแวร์แยกภายหลัง</p>
           <p>หากต้องการวิเคราะห์เชิงลึกเพิ่มเติม ให้เชื่อม Power BI เข้ากับ SQLite หรือ API ส่งออกที่ระบบเตรียมไว้</p>
         </div>
+      </div>
+
+      <div class="info-chip-row">
+        <div class="info-chip">พร้อมเดโมในเครื่องภายใน</div>
+        <div class="info-chip">มีจุดรับข้อมูลจาก AI</div>
+        <div class="info-chip">พร้อมสรุปรายงานต่อ</div>
       </div>
     </div>
   </div>

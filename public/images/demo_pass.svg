@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <rect width="640" height="480" fill="#1a1f2e"/>
+  <rect x="160" y="100" width="320" height="260" rx="16" fill="none" stroke="#27ae60" stroke-width="3"/>
+  <circle cx="320" cy="200" r="40" fill="none" stroke="#27ae60" stroke-width="3"/>
+  <polyline points="298,200 314,218 346,184" fill="none" stroke="#27ae60" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="320" y="275" text-anchor="middle" fill="#27ae60" font-size="20" font-family="sans-serif" font-weight="bold">PASS</text>
+  <text x="320" y="305" text-anchor="middle" fill="#ccc" font-size="14" font-family="sans-serif">No defect detected</text>
+  <text x="320" y="460" text-anchor="middle" fill="#555" font-size="11" font-family="sans-serif">YOLOv8 Demo Result</text>
+</svg>

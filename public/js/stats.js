@@ -36,6 +36,23 @@ let chartDefectRatio = null;
 let chartConfidenceTrend = null;
 let chartPchart = null;
 
+// สลับระหว่าง empty state กับ หน้าแสดงข้อมูล
+// ถ้ายังไม่มีข้อมูล → โซนการ์ดสรุปที่โชว์ 0 ทุกอัน + กราฟที่ยังว่าง
+//   เลยโชว์ empty state แทน ดูเรียบร้อยกว่า + มีลิงก์ไปหน้า Input
+function setOverviewFirstUseState(isFirstUse) {
+  const firstUseState = document.getElementById('overviewFirstUseState');
+  const statsGrid = document.querySelector('#tab-overview .stats-grid');
+  const summaryRow = document.querySelector('#tab-overview .summary-row');
+  if (!firstUseState) return;
+
+  firstUseState.style.display = isFirstUse ? 'block' : 'none';
+  if (statsGrid) statsGrid.style.display = isFirstUse ? 'none' : 'grid';
+  if (summaryRow) summaryRow.style.display = isFirstUse ? 'none' : 'flex';
+}
+
+// --- ฟังก์ชันแปลงรหัสเป็นภาษาไทย ---
+// ใช้ซ้ำทั้งในตารางและกราฟ เปลี่ยนคำแปลที่เดียวจบ
+
 function getModeLabel(mode) {
   const labels = {
     'count': 'นับข้อโซ่',
@@ -110,6 +127,8 @@ async function loadOverview() {
     document.getElementById('totalDefects').textContent = totalDefects;
     document.getElementById('defectRate').textContent = defectRate + '%';
     document.getElementById('avgConfidence').textContent = avgConf + '%';
+
+    setOverviewFirstUseState(totalInspections === 0 && orders.length === 0);
 
     // วาดกราฟ: ตำหนิแยกตามสี (กราฟแท่ง)
     if (colorData.length > 0) {
@@ -290,7 +309,11 @@ async function loadPchartData() {
     const res = await fetch('/api/stats/pchart');
     const data = await res.json();
 
-    if (data.length === 0) return;
+    if (data.length === 0) {
+      const tbody = document.getElementById('pchartTable');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล p-chart เพราะระบบยังไม่เคยรับผลตรวจ</td></tr>';
+      return;
+    }
 
     // คำนวณ p-bar (ค่าเฉลี่ยสัดส่วนของเสียทั้งหมด)
     const totalDefects = data.reduce((sum, d) => sum + d.defect_count, 0);
@@ -388,6 +411,8 @@ async function loadPchartData() {
 }
 
 // ---- รายงานประจำวัน ----
+// ดึงข้อมูลจาก View daily_qa_summary แล้วเติมใส่ตาราง
+// แต่ละแถว = 1 วัน + 1 สี + 1 ขนาด + 1 โหมด
 
 async function loadDailyReport() {
   try {
@@ -396,7 +421,7 @@ async function loadDailyReport() {
 
     const tbody = document.getElementById('dailyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีรายงานประจำวัน เพราะระบบยังไม่เคยรับผลตรวจ</td></tr>';
       return;
     }
 
@@ -419,6 +444,7 @@ async function loadDailyReport() {
   }
 }
 
+// รายงานรายสัปดาห์ — รวมข้อมูลเป็นสัปดาห์ละแถว
 async function loadWeeklyReport() {
   try {
     const res = await fetch('/api/stats/weekly');
@@ -426,7 +452,7 @@ async function loadWeeklyReport() {
 
     const tbody = document.getElementById('weeklyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีรายงานรายสัปดาห์ เพราะระบบยังไม่เคยมีข้อมูลสะสม</td></tr>';
       return;
     }
 
@@ -447,6 +473,7 @@ async function loadWeeklyReport() {
   }
 }
 
+// รายงานรายเดือน — รวมข้อมูลเป็นเดือนละแถว
 async function loadMonthlyReport() {
   try {
     const res = await fetch('/api/stats/monthly');
@@ -454,7 +481,7 @@ async function loadMonthlyReport() {
 
     const tbody = document.getElementById('monthlyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีรายงานรายเดือน เพราะระบบยังไม่เคยมีข้อมูลสะสม</td></tr>';
       return;
     }
 
@@ -475,6 +502,8 @@ async function loadMonthlyReport() {
 }
 
 // ---- ประวัติการตรวจสอบ ----
+// ดึงผลตรวจทั้งหมดจาก View power_bi_inspection_summary
+// จำกัด 100 แถวล่าสุด ไม่งั้นโหลดหมดแล้วช้า
 
 async function loadHistory() {
   try {
@@ -483,7 +512,7 @@ async function loadHistory() {
 
     const tbody = document.getElementById('historyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีประวัติการตรวจสอบ เพราะระบบยังไม่เคยถูกใช้งาน</td></tr>';
       return;
     }
 
@@ -506,7 +535,11 @@ async function loadHistory() {
 }
 
 // ---- เริ่มทำงาน ----
-// โหลดภาพรวมตอนเปิดหน้า Stats
+// 1) ตั้ง empty state ไว้ก่อน (ถ้าไม่มีข้อมูลจะเห็นข้อความนำไปหน้า Input)
+// 2) โหลดภาพรวม (overview) ทันที
+// 3) เช็คว่ามี ?tab=xxx ใน URL หรือเปล่า
+//    ถ้ามี → สลับไปแท็บนั้นเลย (เช่น กดปุ่ม "แจ้งเตือน & ประวัติ" จาก sidebar จะส่ง ?tab=history มา)
+setOverviewFirstUseState(true);
 loadOverview();
 
 const initialTab = new URLSearchParams(window.location.search).get('tab');

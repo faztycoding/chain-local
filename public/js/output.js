@@ -27,6 +27,66 @@ socket.on('disconnect', () => {
   document.getElementById('cameraStatus').className = 'value red';
 });
 
+// สลับระหว่าง "หน้าว่าง" กับ "หน้าแสดงข้อมูล"
+// ตอนเปิดครั้งแรก ยังไม่มี order → โชว์ empty state ให้กดไปหน้า Input
+// พอมี order แล้ว → ซ่อน empty state แล้วโชว์ข้อมูลจริง + dropdown เลือก order
+function setFirstUseState(isFirstUse) {
+  const firstUseState = document.getElementById('firstUseState');
+  const orderPanel = document.getElementById('orderPanel');
+  const selectorPanel = document.getElementById('orderSelectorPanel');
+  if (!firstUseState || !orderPanel) return;
+
+  firstUseState.style.display = isFirstUse ? 'block' : 'none';
+  orderPanel.style.display = isFirstUse ? 'none' : 'block';
+  if (selectorPanel) selectorPanel.style.display = isFirstUse ? 'none' : 'block';
+}
+
+// โหลดรายการ order ทั้งหมดใส่ dropdown ให้เลือก
+// ทำไมต้องมี? → ให้ผู้ใช้ดูคำสั่งเก่าได้ ไม่ใช่แค่อันล่าสุด
+// เรียกตอน: เปิดหน้าครั้งแรก + มี order ใหม่เข้ามา
+async function loadOrdersList() {
+  try {
+    const res = await fetch('/api/orders');
+    const orders = await res.json();
+    const select = document.getElementById('orderSelector');
+    if (!select || orders.length === 0) return;
+
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">-- เลือกคำสั่ง --</option>' +
+      orders.map(o => `<option value="${o.id}" ${o.id == currentOrderId ? 'selected' : ''}>#${o.id} | ${getModeLabel(o.mode)} | ${o.chain_size} | ${getColorLabel(o.chain_color)} | ${getStatusLabel(o.status)}</option>`).join('');
+  } catch (err) {
+    console.error('โหลดรายการคำสั่งไม่สำเร็จ:', err);
+  }
+}
+
+// เมื่อเลือก order จาก dropdown → โหลดข้อมูล order + ผลตรวจของ order นั้น
+// ถ้า order นั้นยังไม่มีผลตรวจ → โชว์ "-" ทุกช่อง
+async function onOrderSelect(orderId) {
+  if (!orderId) return;
+  try {
+    const res = await fetch(`/api/output/${orderId}`);
+    const data = await res.json();
+    if (!data.order) return;
+
+    currentOrderId = data.order.id;
+    updateOrderDisplay(data.order);
+    if (data.inspection) {
+      updateInspectionDisplay(data.inspection, data.order);
+    } else {
+      document.getElementById('defectType').textContent = 'ยังไม่มีผลตรวจ';
+      document.getElementById('confidence').textContent = '-';
+      document.getElementById('detectedLink').textContent = '-';
+      document.getElementById('defectDetail').textContent = '-';
+      document.getElementById('lastUpdated').textContent = '-';
+      document.getElementById('aiImage').style.display = 'none';
+      document.getElementById('aiImagePlaceholder').style.display = 'block';
+    }
+    addLog('เลือกคำสั่ง', `สลับไปดูคำสั่ง #${orderId}`);
+  } catch (err) {
+    console.error('โหลดข้อมูลคำสั่งไม่สำเร็จ:', err);
+  }
+}
+
 // รับคำสั่งใหม่จากหน้า Input (ผ่าน Socket.io)
 // ทำไมไม่ใช้ API ดึงข้อมูล?
 // → Socket.io เป็นแบบ "push" Server ส่งข้อมูลมาหาเราเอง
@@ -35,6 +95,7 @@ socket.on('new_order', (order) => {
   currentOrderId = order.id;
   addLog('คำสั่ง', `รับคำสั่งใหม่: #${order.id} | โหมด: ${getModeLabel(order.mode)} | ขนาด: ${order.chain_size} | สี: ${getColorLabel(order.chain_color)}`);
   updateOrderDisplay(order);
+  loadOrdersList();
   showToast(`รับคำสั่งใหม่ #${order.id} แล้ว!`, 'success');
 });
 
@@ -70,7 +131,7 @@ socket.on('detection_result', (data) => {
 // อัปเดตพาเนลข้อมูลคำสั่งปัจจุบัน
 // เปิดพาเนลที่ซ่อนไว้ (display:none) และเติมข้อมูลทุกช่อง
 function updateOrderDisplay(order) {
-  document.getElementById('orderPanel').style.display = 'block';
+  setFirstUseState(false);
   document.getElementById('orderId').textContent = '#' + order.id;
   document.getElementById('orderMode').textContent = getModeLabel(order.mode);
   document.getElementById('orderSize').textContent = order.chain_size;
@@ -81,6 +142,9 @@ function updateOrderDisplay(order) {
   updateSystemStatus(order.status);
 }
 
+// อัปเดตส่วน "ผลการตรวจจับจาก AI" ทั้งหมด
+// ใส่: สถานะตรวจจับ, ประเภทตำหนิ, ความมั่นใจ, รูปภาพ, เวลา
+// ถ้ามีรูป → โชว์รูป / ถ้าไม่มี → โชว์ placeholder
 function updateInspectionDisplay(inspection, order) {
   document.getElementById('chainCount').textContent = order.total_chain_count;
 
@@ -180,12 +244,18 @@ async function controlAction(status) {
   }
 }
 
+// โหลดข้อมูลล่าสุดจาก API ตอนเปิดหน้า/refresh
+// ทำไมต้องมี? → Socket.io ส่งแค่ข้อมูลใหม่ ถ้า refresh หน้าข้อมูลหาย
+//   API นี้ช่วยดึงข้อมูลล่าสุดกลับมา
 async function loadCurrentOutput() {
   try {
     const res = await fetch('/api/output/current');
     const data = await res.json();
 
-    if (!data.order) return;
+    if (!data.order) {
+      setFirstUseState(true);
+      return;
+    }
 
     currentOrderId = data.order.id;
     updateOrderDisplay(data.order);
@@ -212,7 +282,9 @@ function addLog(type, message) {
   logArea.scrollTop = logArea.scrollHeight;
 }
 
-// แปลงรหัสโหมดเป็นภาษาไทย
+// --- ฟังก์ชันแปลงรหัสเป็นภาษาไทย ---
+// ทำไมทำเป็นฟังก์ชันแยก? → ใช้ซ้ำได้หลายที่ เปลี่ยนคำแปลที่เดียวจบ
+
 function getModeLabel(mode) {
   const labels = {
     'count': 'นับข้อโซ่',
@@ -266,4 +338,58 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
+// ปุ่ม "จำลองผล AI" → สุ่มผลตรวจแล้วยิงเข้า API เหมือน YOLOv8 จริง
+// มีไว้ให้อาจารย์/ลูกค้าทดสอบ flow ครบโดยไม่ต้องมี AI จริง
+// สุ่มจาก 7 สถานการณ์: ผ่าน 3 อัน + ตำหนิ 4 แบบ
+// ค่า confidence สุ่มระหว่าง 75%-100% / chain_count สุ่ม 5-24
+async function simulateDetection() {
+  if (!currentOrderId) {
+    showToast('ยังไม่มีคำสั่ง กรุณาสร้างคำสั่งจากหน้า Input ก่อน', 'error');
+    return;
+  }
+
+  const scenarios = [
+    { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
+    { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
+    { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
+    { defect_type: 'scratch', defect_detail: 'รอยขีดข่วนที่ผิวข้อโซ่', image_path: '/images/demo_detect_001.svg' },
+    { defect_type: 'crack', defect_detail: 'รอยร้าวขนาดเล็กบริเวณข้อต่อ', image_path: '/images/demo_crack.svg' },
+    { defect_type: 'rust', defect_detail: 'สนิมเกาะบนผิวโซ่', image_path: '/images/demo_rust.svg' },
+    { defect_type: 'deformation', defect_detail: 'ข้อโซ่บิดงอผิดรูป', image_path: '/images/demo_detect_001.svg' },
+  ];
+
+  const pick = scenarios[Math.floor(Math.random() * scenarios.length)];
+  const chainCount = Math.floor(Math.random() * 20) + 5;
+  const confidence = (Math.random() * 0.25 + 0.75).toFixed(3);
+
+  try {
+    const res = await fetch('/api/detect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: currentOrderId,
+        chain_count: chainCount,
+        defect_type: pick.defect_type,
+        defect_detail: pick.defect_detail,
+        confidence: parseFloat(confidence),
+        image_path: pick.image_path
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`จำลองผล AI สำเร็จ: ${pick.defect_type === 'none' ? 'ผ่าน ✓' : getDefectLabel(pick.defect_type) + ' ✗'}`, pick.defect_type === 'none' ? 'success' : 'error');
+    }
+  } catch (err) {
+    showToast('จำลองผล AI ไม่สำเร็จ', 'error');
+    console.error(err);
+  }
+}
+
+// --- เริ่มต้นหน้า Output ---
+// 1) ตั้ง empty state ไว้ก่อน (ซ่อนข้อมูล โชว์ข้อความ "ยังไม่มีคำสั่ง")
+// 2) โหลดข้อมูลล่าสุดจาก API → ถ้ามี order จะปิด empty state เอง
+// 3) โหลดรายการ order ใส่ dropdown
+setFirstUseState(true);
 loadCurrentOutput();
+loadOrdersList();

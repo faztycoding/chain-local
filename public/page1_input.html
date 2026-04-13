@@ -20,87 +20,141 @@
 
     <!-- เนื้อหาหลัก -->
     <div class="main-content">
-      <h1 class="page-title">ระบบนับข้อโซ่ & ตรวจจับตำหนิด้วย AI</h1>
-      <p style="color:#888; margin-bottom:25px;">สร้างคำสั่งตรวจสอบใหม่ ข้อมูลจะถูกส่งไปแสดงผลที่หน้าจอควบคุมแบบเรียลไทม์</p>
+      <div class="page-header">
+        <div>
+          <div class="page-kicker">แผงสั่งงานตรวจสอบ</div>
+          <h1 class="page-title">ระบบนับข้อโซ่ & ตรวจจับตำหนิด้วย AI</h1>
+          <p class="page-subtitle">สร้างคำสั่งตรวจสอบใหม่ที่นี่ ข้อมูลจะถูกส่งต่อไปยังหน้าจอควบคุมและระบบ AI ทันที</p>
+        </div>
+        <div class="hero-pills">
+          <div class="hero-pill">
+            <span>จุดเริ่มต้น</span>
+            <strong>สร้างคำสั่งที่นี่</strong>
+          </div>
+          <div class="hero-pill">
+            <span>การเชื่อมต่อ</span>
+            <strong>ส่งต่อไป Output อัตโนมัติ</strong>
+          </div>
+        </div>
+      </div>
 
-      <div class="panel">
-        <div class="panel-title">สร้างคำสั่งตรวจสอบใหม่</div>
-        <div class="form-container">
-          <form id="orderForm">
-            <!-- เลือกโหมดการทำงาน -->
-            <div class="form-group">
-              <label for="mode">โหมดการตรวจสอบ *</label>
-              <select id="mode" required>
-                <option value="">-- เลือกโหมด --</option>
-                <option value="count">นับข้อโซ่อย่างเดียว</option>
-                <option value="defect">ตรวจจับตำหนิอย่างเดียว</option>
-                <option value="both">ทั้งสองอย่าง (นับข้อ + ตรวจตำหนิ)</option>
-              </select>
-            </div>
+      <div class="mini-grid">
+        <div class="mini-card">
+          <span>ขั้นตอน 1</span>
+          <strong>เลือกงานที่จะตรวจ</strong>
+          <p>กรอกโหมด ขนาด สี และรายละเอียดให้ครบ</p>
+        </div>
+        <div class="mini-card">
+          <span>ขั้นตอน 2</span>
+          <strong>ระบบสร้างคำสั่งทันที</strong>
+          <p>กดส่ง ข้อมูลจะบันทึกและส่งต่อไป Output ทันที</p>
+        </div>
+        <div class="mini-card">
+          <span>ขั้นตอน 3</span>
+          <strong>รอผลจาก AI</strong>
+          <p>AI จะใช้รหัสคำสั่งนี้ส่งผลตรวจกลับเข้าระบบ</p>
+        </div>
+      </div>
 
-            <!-- ขนาดโซ่ -->
-            <div class="form-group">
-              <label for="chain_size">ขนาดโซ่ *</label>
-              <select id="chain_size" required>
-                <option value="">-- เลือกขนาด --</option>
-                <option value="6mm">6 mm</option>
-                <option value="8mm">8 mm</option>
-                <option value="10mm">10 mm</option>
-                <option value="12mm">12 mm</option>
-                <option value="14mm">14 mm</option>
-                <option value="16mm">16 mm</option>
-                <option value="19mm">19 mm</option>
-                <option value="22mm">22 mm</option>
-              </select>
-            </div>
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-title">สร้างคำสั่งตรวจสอบใหม่</div>
+          <div class="form-container">
+            <form id="orderForm">
+              <div class="form-group">
+                <label for="mode">โหมดการตรวจสอบ *</label>
+                <select id="mode" required>
+                  <option value="">-- เลือกโหมด --</option>
+                  <option value="count">นับข้อโซ่อย่างเดียว</option>
+                  <option value="defect">ตรวจจับตำหนิอย่างเดียว</option>
+                  <option value="both">ทั้งสองอย่าง (นับข้อ + ตรวจตำหนิ)</option>
+                </select>
+              </div>
 
-            <!-- สีโซ่ -->
-            <div class="form-group">
-              <label for="chain_color">สีโซ่ (สำหรับการตรวจจับ) *</label>
-              <select id="chain_color" required>
-                <option value="">-- เลือกสี --</option>
-                <option value="silver">เงิน (สีธรรมชาติ)</option>
-                <option value="gold">ทอง (ชุบสังกะสี)</option>
-                <option value="black">ดำ (เคลือบออกไซด์)</option>
-                <option value="red">แดง</option>
-                <option value="blue">น้ำเงิน</option>
-                <option value="green">เขียว</option>
-              </select>
-            </div>
+              <div class="form-group">
+                <label for="chain_size">ขนาดโซ่ *</label>
+                <select id="chain_size" required>
+                  <option value="">-- เลือกขนาด --</option>
+                  <option value="6mm">6 mm</option>
+                  <option value="8mm">8 mm</option>
+                  <option value="10mm">10 mm</option>
+                  <option value="12mm">12 mm</option>
+                  <option value="14mm">14 mm</option>
+                  <option value="16mm">16 mm</option>
+                  <option value="19mm">19 mm</option>
+                  <option value="22mm">22 mm</option>
+                </select>
+              </div>
 
-            <!-- รายละเอียดสินค้า -->
-            <div class="form-group">
-              <label for="product_attribution">รายละเอียดสินค้าเพิ่มเติม (ไม่บังคับ)</label>
-              <textarea id="product_attribution" rows="3" placeholder="เช่น Grade 80, DIN 5685, ลูกค้า: ABC Corp, ล็อต: 2024-001"></textarea>
-            </div>
+              <div class="form-group">
+                <label for="chain_color">สีโซ่ (สำหรับการตรวจจับ) *</label>
+                <select id="chain_color" required>
+                  <option value="">-- เลือกสี --</option>
+                  <option value="silver">เงิน (สีธรรมชาติ)</option>
+                  <option value="gold">ทอง (ชุบสังกะสี)</option>
+                  <option value="black">ดำ (เคลือบออกไซด์)</option>
+                  <option value="red">แดง</option>
+                  <option value="blue">น้ำเงิน</option>
+                  <option value="green">เขียว</option>
+                </select>
+              </div>
 
-            <!-- ปุ่มส่งคำสั่ง -->
-            <button type="submit" class="btn btn-success btn-block">
-              ▶ ส่งคำสั่งตรวจสอบ
-            </button>
-          </form>
+              <div class="form-group">
+                <label for="product_attribution">รายละเอียดสินค้าเพิ่มเติม (ไม่บังคับ)</label>
+                <textarea id="product_attribution" rows="3" placeholder="เช่น Grade 80, DIN 5685, ลูกค้า: ABC Corp, ล็อต: 2024-001"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-success btn-block">
+                ▶ ส่งคำสั่งตรวจสอบ
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="stack-panel">
+          <div class="panel-note">
+            <strong>เริ่มต้นใช้งานอย่างไร?</strong>
+            <p>สร้างคำสั่งที่ฟอร์มด้านซ้าย กดส่งแล้วหน้าจอควบคุมจะอัปเดตทันที</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">เช็กลิสต์ก่อนกดส่ง</div>
+            <ul class="soft-list">
+              <li><strong>โหมด:</strong> เลือกให้ตรงว่าต้องการนับ, ตรวจตำหนิ หรือทำทั้งสองอย่าง</li>
+              <li><strong>ขนาดและสี:</strong> ใช้เป็นข้อมูลอ้างอิงในหน้า Output และรายงานภายหลัง</li>
+              <li><strong>รายละเอียดสินค้า:</strong> ใส่เท่าที่จำเป็นเพื่อให้ตามงานง่าย ไม่ต้องยาวเกินไป</li>
+            </ul>
+          </div>
+
+          <div class="info-chip-row">
+            <div class="info-chip">บันทึกลงฐานข้อมูลทันที</div>
+            <div class="info-chip">ส่งต่อหน้า Output อัตโนมัติ</div>
+            <div class="info-chip">พร้อมเชื่อม AI ต่อ</div>
+          </div>
         </div>
       </div>
 
       <!-- คำสั่งล่าสุด -->
       <div class="panel">
         <div class="panel-title">คำสั่งตรวจสอบล่าสุด</div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>รหัส</th>
-              <th>โหมด</th>
-              <th>ขนาด</th>
-              <th>สี</th>
-              <th>รายละเอียด</th>
-              <th>สถานะ</th>
-              <th>วันที่สร้าง</th>
-            </tr>
-          </thead>
-          <tbody id="ordersTable">
-            <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีคำสั่งตรวจสอบ</td></tr>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>โหมด</th>
+                <th>ขนาด</th>
+                <th>สี</th>
+                <th>รายละเอียด</th>
+                <th>สถานะ</th>
+                <th>วันที่สร้าง</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTable">
+              <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีคำสั่งตรวจสอบ</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

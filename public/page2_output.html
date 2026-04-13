@@ -22,21 +22,57 @@
       <button class="sidebar-btn start" id="btnStart" onclick="controlAction('running')">เริ่มทำงาน</button>
       <button class="sidebar-btn stop" id="btnStop" onclick="controlAction('stopped')">หยุดทำงาน</button>
       <button class="sidebar-btn emergency" id="btnEmergency" onclick="controlAction('emergency')">หยุดฉุกเฉิน</button>
+      <hr style="border:none; border-top:1px solid rgba(255,255,255,0.15); margin:12px 0;">
+      <button class="sidebar-btn" id="btnSimulate" onclick="simulateDetection()" style="background:linear-gradient(135deg,#6c5ce7 0%,#a855f7 100%); font-weight:600; letter-spacing:0.5px; border:1px solid rgba(255,255,255,0.15); text-align:center; display:block; width:100%;">จำลองผล AI</button>
     </div>
 
     <!-- เนื้อหาหลัก -->
     <div class="main-content">
-      <h1 class="page-title">ระบบนับข้อโซ่ & ตรวจจับตำหนิด้วย AI</h1>
+      <div class="page-header">
+        <div>
+          <div class="page-kicker">หน้าจอเฝ้าดูผลแบบเรียลไทม์</div>
+          <h1 class="page-title">ระบบนับข้อโซ่ & ตรวจจับตำหนิด้วย AI</h1>
+          <p class="page-subtitle">ติดตามคำสั่งปัจจุบัน, สถานะเครื่อง และผลตรวจจับจาก AI แบบเรียลไทม์</p>
+        </div>
+        <div class="hero-pills">
+          <div class="hero-pill">
+            <span>มุมมอง</span>
+            <strong>ควบคุมและเฝ้าดูผล</strong>
+          </div>
+          <div class="hero-pill">
+            <span>การอัปเดต</span>
+            <strong>Socket.io แบบทันที</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-grid">
+        <div class="mini-card">
+          <span>ภาพรวม</span>
+          <strong>ดูข้อมูลทั้งหมดในหน้าเดียว</strong>
+          <p>สถานะงาน, ผลตรวจจับ, และบันทึกเหตุการณ์รวมไว้ในที่เดียว</p>
+        </div>
+        <div class="mini-card">
+          <span>เรียลไทม์</span>
+          <strong>อัปเดตทันที</strong>
+          <p>เมื่อมีคำสั่งหรือผล AI ใหม่ หน้าจอจะอัปเดตทันที</p>
+        </div>
+        <div class="mini-card">
+          <span>เหมาะกับ</span>
+          <strong>ใช้เดโมและดูลำดับการทำงาน</strong>
+          <p>เปิดคู่กับหน้าสั่งงาน เพื่อดูลำดับการทำงานจริง</p>
+        </div>
+      </div>
 
       <!-- การ์ดสถานะ -->
       <div class="status-row">
         <div class="status-card">
           <div class="label">สถานะกล้อง</div>
-          <div class="value green" id="cameraStatus">เชื่อมต่อแล้ว</div>
+          <div class="value orange" id="cameraStatus">กำลังเชื่อมต่อ</div>
         </div>
         <div class="status-card">
           <div class="label">สถานะโซ่</div>
-          <div class="value orange" id="chainStatus">หยุดทำงาน</div>
+          <div class="value orange" id="chainStatus">รอสร้างคำสั่ง</div>
         </div>
         <div class="status-card">
           <div class="label">จำนวนข้อโซ่</div>
@@ -44,68 +80,112 @@
         </div>
         <div class="status-card">
           <div class="label">สถานะการตรวจจับ</div>
-          <div class="value green" id="detectionStatus">ไม่พบตำหนิ</div>
+          <div class="value orange" id="detectionStatus">ยังไม่มีข้อมูล</div>
         </div>
         <div class="status-card">
           <div class="label">สถานะระบบ</div>
-          <div class="value red" id="systemStatus">หยุดทำงาน</div>
+          <div class="value blue" id="systemStatus">พร้อมเริ่มใช้งาน</div>
         </div>
       </div>
 
-      <!-- ข้อมูลคำสั่งปัจจุบัน -->
-      <div class="panel" id="orderPanel" style="display:none;">
-        <div class="panel-title">คำสั่งตรวจสอบปัจจุบัน</div>
-        <div class="order-info-grid">
-          <div class="order-info-item">
-            <div class="label">รหัสคำสั่ง</div>
-            <div class="value" id="orderId">-</div>
-          </div>
-          <div class="order-info-item">
-            <div class="label">โหมด</div>
-            <div class="value" id="orderMode">-</div>
-          </div>
-          <div class="order-info-item">
-            <div class="label">ขนาดโซ่</div>
-            <div class="value" id="orderSize">-</div>
-          </div>
-          <div class="order-info-item">
-            <div class="label">สีโซ่</div>
-            <div class="value" id="orderColor">-</div>
-          </div>
-          <div class="order-info-item">
-            <div class="label">รายละเอียดสินค้า</div>
-            <div class="value" id="orderAttribution">-</div>
-          </div>
-          <div class="order-info-item">
-            <div class="label">ตำหนิทั้งหมด</div>
-            <div class="value" id="orderDefects" style="color:#e74c3c;">0</div>
-          </div>
+      <div class="panel" id="orderSelectorPanel" style="display:none; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <div class="panel-title" style="margin:0; border:none; padding:0;">เลือกคำสั่งตรวจสอบ</div>
+          <select id="orderSelector" onchange="onOrderSelect(this.value)" style="flex:1; min-width:200px; padding:10px 14px; border:1px solid #cfd8ea; border-radius:12px; font-size:14px; background:#fbfcff; cursor:pointer;">
+            <option value="">-- เลือกคำสั่ง --</option>
+          </select>
         </div>
       </div>
 
-      <!-- ผลการตรวจจับจาก AI -->
-      <div class="panel">
-        <div class="panel-title">ผลการตรวจจับจาก AI</div>
-        <div class="ai-result">
-          <div class="ai-image-box" id="aiImageBox">
-            <span id="aiImagePlaceholder">รอรับผลจากระบบ AI...</span>
-            <img id="aiImage" src="" alt="ผลตรวจจับ AI" style="display:none;">
+      <div class="content-grid">
+        <div class="stack-panel">
+          <div class="empty-state-card" id="firstUseState">
+            <div class="empty-state-icon">📡</div>
+            <div class="empty-state-title">ยังไม่มีคำสั่งตรวจสอบ</div>
+            <div class="empty-state-text">เริ่มต้นโดยสร้างคำสั่งที่หน้า <strong>สั่งงานตรวจสอบ</strong> ก่อน แล้วข้อมูลจะอัปเดตที่นี่อัตโนมัติ</div>
+            <div class="empty-state-actions">
+              <a href="/page1_input.html" class="btn btn-primary">ไปหน้าสั่งงานตรวจสอบ</a>
+            </div>
           </div>
-          <div class="ai-info">
-            <div class="info-row"><strong>ประเภทตำหนิ:</strong> <span id="defectType">-</span></div>
-            <div class="info-row"><strong>ความมั่นใจ:</strong> <span id="confidence">-</span></div>
-            <div class="info-row"><strong>ข้อโซ่ที่ตรวจพบ:</strong> <span id="detectedLink">-</span></div>
-            <div class="info-row"><strong>รายละเอียดตำหนิ:</strong> <span id="defectDetail">-</span></div>
-            <div class="info-row"><strong>อัปเดตล่าสุด:</strong> <span id="lastUpdated">-</span></div>
+
+          <!-- ข้อมูลคำสั่งปัจจุบัน -->
+          <div class="panel" id="orderPanel" style="display:none;">
+            <div class="panel-title">คำสั่งตรวจสอบปัจจุบัน</div>
+            <div class="order-info-grid">
+              <div class="order-info-item">
+                <div class="label">รหัสคำสั่ง</div>
+                <div class="value" id="orderId">-</div>
+              </div>
+              <div class="order-info-item">
+                <div class="label">โหมด</div>
+                <div class="value" id="orderMode">-</div>
+              </div>
+              <div class="order-info-item">
+                <div class="label">ขนาดโซ่</div>
+                <div class="value" id="orderSize">-</div>
+              </div>
+              <div class="order-info-item">
+                <div class="label">สีโซ่</div>
+                <div class="value" id="orderColor">-</div>
+              </div>
+              <div class="order-info-item">
+                <div class="label">รายละเอียดสินค้า</div>
+                <div class="value" id="orderAttribution">-</div>
+              </div>
+              <div class="order-info-item">
+                <div class="label">ตำหนิทั้งหมด</div>
+                <div class="value" id="orderDefects" style="color:#e74c3c;">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ผลการตรวจจับจาก AI -->
+          <div class="panel">
+            <div class="panel-title">ผลการตรวจจับจาก AI</div>
+            <div class="ai-result">
+              <div class="ai-image-box" id="aiImageBox">
+                <span id="aiImagePlaceholder">ยังไม่มีภาพผลตรวจในระบบ</span>
+                <img id="aiImage" src="" alt="ผลตรวจจับ AI" style="display:none;">
+              </div>
+              <div class="ai-info">
+                <div class="info-row"><strong>ประเภทตำหนิ:</strong> <span id="defectType">ยังไม่มีผลตรวจ</span></div>
+                <div class="info-row"><strong>ความมั่นใจ:</strong> <span id="confidence">-</span></div>
+                <div class="info-row"><strong>ข้อโซ่ที่ตรวจพบ:</strong> <span id="detectedLink">-</span></div>
+                <div class="info-row"><strong>รายละเอียดตำหนิ:</strong> <span id="defectDetail">รอข้อมูลจาก AI</span></div>
+                <div class="info-row"><strong>อัปเดตล่าสุด:</strong> <span id="lastUpdated">ยังไม่มีการตรวจ</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- บันทึกการตรวจจับ -->
+          <div class="panel">
+            <div class="panel-title">บันทึกการตรวจจับ</div>
+            <div class="log-area" id="logArea">
+              <div class="log-entry"><span class="log-time">[เริ่มต้น]</span> ยังไม่มีคำสั่งในระบบ เริ่มจากหน้า สั่งงานตรวจสอบ ก่อน</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- บันทึกการตรวจจับ -->
-      <div class="panel">
-        <div class="panel-title">บันทึกการตรวจจับ</div>
-        <div class="log-area" id="logArea">
-          <div class="log-entry"><span class="log-time">[ระบบ]</span> รอเชื่อมต่อ...</div>
+        <div class="stack-panel">
+          <div class="panel-note">
+            <strong>วิธีดูหน้านี้</strong>
+            <p>ดูการ์ดสถานะด้านบน → ข้อมูลคำสั่งตรงกลาง → ผล AI ด้านล่าง → Log ไล่ลำดับเหตุการณ์</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">ภาพการใช้งานหน้านี้</div>
+            <ul class="soft-list">
+              <li><strong>ผู้ควบคุม:</strong> เช็กสถานะคำสั่งและควบคุมการเดิน/หยุดเครื่อง</li>
+              <li><strong>ทีม AI:</strong> ดูว่าผลตรวจจับอัปเดตเข้ามาถูกต้องหรือไม่</li>
+              <li><strong>เดโม:</strong> เห็นลำดับการทำงานตั้งแต่รับคำสั่งจนถึงผลตรวจ</li>
+            </ul>
+          </div>
+
+          <div class="info-chip-row">
+            <div class="info-chip">เชื่อม Socket.io แบบสด</div>
+            <div class="info-chip">โหลด snapshot ล่าสุดเมื่อรีเฟรช</div>
+            <div class="info-chip">รองรับเดโมลำดับงานครบ</div>
+          </div>
         </div>
       </div>
     </div>
