@@ -55,7 +55,7 @@ function getCurrentOrder() {
 }
 
 // ดึงผลตรวจล่าสุดของ order นั้น → ใช้แสดงรูป+ข้อมูลตำหนิบนหน้า Output
-// ทำไมเรียงตาม timestamp DESC? → เพราะ 1 order มีผลตรวจหลายครั้ง เอาล่าสุดสุด
+// ทำไมเรียงตาม timestamp DESC? → เพราะ 1 order มีผลตรวจหลายครั้ง เอาล่าสุด
 function getLatestInspectionForOrder(orderId) {
   if (!orderId) return null;
 
