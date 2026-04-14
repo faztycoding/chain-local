@@ -15,15 +15,15 @@ let currentOrderId = null;
 
 // เมื่อเชื่อมต่อ Server ได้ → สถานะกล้องเป็นสีเขียว "เชื่อมต่อแล้ว"
 socket.on('connect', () => {
-  addLog('ระบบ', 'เชื่อมต่อ Server สำเร็จ');
-  document.getElementById('cameraStatus').textContent = 'เชื่อมต่อแล้ว';
+  addLog('System', 'Connected to server');
+  document.getElementById('cameraStatus').textContent = 'Connected';
   document.getElementById('cameraStatus').className = 'value green';
 });
 
 // หลุดการเชื่อมต่อ → สถานะเป็นสีแดง "ขาดการเชื่อมต่อ"
 socket.on('disconnect', () => {
-  addLog('ระบบ', 'ขาดการเชื่อมต่อกับ Server');
-  document.getElementById('cameraStatus').textContent = 'ขาดการเชื่อมต่อ';
+  addLog('System', 'Disconnected from server');
+  document.getElementById('cameraStatus').textContent = 'Disconnected';
   document.getElementById('cameraStatus').className = 'value red';
 });
 
@@ -52,7 +52,7 @@ async function loadOrdersList() {
     if (!select || orders.length === 0) return;
 
     const currentVal = select.value;
-    select.innerHTML = '<option value="">-- เลือกคำสั่ง --</option>' +
+    select.innerHTML = '<option value="">-- Select Order --</option>' +
       orders.map(o => `<option value="${o.id}" ${o.id == currentOrderId ? 'selected' : ''}>#${o.id} | ${getModeLabel(o.mode)} | ${o.chain_size} | ${getColorLabel(o.chain_color)} | ${getStatusLabel(o.status)}</option>`).join('');
   } catch (err) {
     console.error('โหลดรายการคำสั่งไม่สำเร็จ:', err);
@@ -73,7 +73,7 @@ async function onOrderSelect(orderId) {
     if (data.inspection) {
       updateInspectionDisplay(data.inspection, data.order);
     } else {
-      document.getElementById('defectType').textContent = 'ยังไม่มีผลตรวจ';
+      document.getElementById('defectType').textContent = 'No results yet';
       document.getElementById('confidence').textContent = '-';
       document.getElementById('detectedLink').textContent = '-';
       document.getElementById('defectDetail').textContent = '-';
@@ -81,7 +81,7 @@ async function onOrderSelect(orderId) {
       document.getElementById('aiImage').style.display = 'none';
       document.getElementById('aiImagePlaceholder').style.display = 'block';
     }
-    addLog('เลือกคำสั่ง', `สลับไปดูคำสั่ง #${orderId}`);
+    addLog('Select', `Switched to order #${orderId}`);
   } catch (err) {
     console.error('โหลดข้อมูลคำสั่งไม่สำเร็จ:', err);
   }
@@ -93,10 +93,10 @@ async function onOrderSelect(orderId) {
 //   ไม่ต้องคอยถามซ้ำๆ (polling) เร็วกว่าและไม่เปลืองทรัพยากร
 socket.on('new_order', (order) => {
   currentOrderId = order.id;
-  addLog('คำสั่ง', `รับคำสั่งใหม่: #${order.id} | โหมด: ${getModeLabel(order.mode)} | ขนาด: ${order.chain_size} | สี: ${getColorLabel(order.chain_color)}`);
+  addLog('Order', `New order: #${order.id} | Mode: ${getModeLabel(order.mode)} | Size: ${order.chain_size} | Color: ${getColorLabel(order.chain_color)}`);
   updateOrderDisplay(order);
   loadOrdersList();
-  showToast(`รับคำสั่งใหม่ #${order.id} แล้ว!`, 'success');
+  showToast(`New order #${order.id} received!`, 'success');
 });
 
 // รับการเปลี่ยนสถานะ (เมื่อกดปุ่ม เริ่ม/หยุด/ฉุกเฉิน)
@@ -104,7 +104,7 @@ socket.on('order_status_changed', (order) => {
   if (order.id === currentOrderId) {
     updateOrderDisplay(order);
     updateSystemStatus(order.status);
-    addLog('สถานะ', `คำสั่ง #${order.id} เปลี่ยนสถานะเป็น: ${getStatusLabel(order.status)}`);
+    addLog('Status', `Order #${order.id} changed to: ${getStatusLabel(order.status)}`);
   }
 });
 
@@ -123,8 +123,8 @@ socket.on('detection_result', (data) => {
     updateInspectionDisplay(inspection, order);
 
     // เพิ่มบันทึกใน Log
-    const logType = inspection.defect_type === 'none' ? 'ผ่าน' : 'ตำหนิ';
-    addLog(logType, `จำนวน: ${inspection.chain_count} | ประเภท: ${getDefectLabel(inspection.defect_type)} | ความมั่นใจ: ${(inspection.confidence * 100).toFixed(1)}%`);
+    const logType = inspection.defect_type === 'none' ? 'Pass' : 'Defect';
+    addLog(logType, `Count: ${inspection.chain_count} | Type: ${getDefectLabel(inspection.defect_type)} | Confidence: ${(inspection.confidence * 100).toFixed(1)}%`);
   }
 });
 
@@ -150,16 +150,16 @@ function updateInspectionDisplay(inspection, order) {
 
   const detStatus = document.getElementById('detectionStatus');
   if (inspection.defect_type === 'none') {
-    detStatus.textContent = 'ไม่พบตำหนิ';
+    detStatus.textContent = 'No Defect';
     detStatus.className = 'value green';
   } else {
-    detStatus.textContent = 'พบตำหนิ!';
+    detStatus.textContent = 'Defect Found!';
     detStatus.className = 'value red';
   }
 
-  document.getElementById('defectType').textContent = inspection.defect_type === 'none' ? 'โซ่ปกติ' : getDefectLabel(inspection.defect_type);
+  document.getElementById('defectType').textContent = inspection.defect_type === 'none' ? 'Normal' : getDefectLabel(inspection.defect_type);
   document.getElementById('confidence').textContent = (inspection.confidence * 100).toFixed(1) + '%';
-  document.getElementById('detectedLink').textContent = inspection.chain_count > 0 ? inspection.chain_count + ' ข้อ' : '-';
+  document.getElementById('detectedLink').textContent = inspection.chain_count > 0 ? inspection.chain_count + ' links' : '-';
   document.getElementById('defectDetail').textContent = inspection.defect_detail || '-';
   document.getElementById('lastUpdated').textContent = inspection.timestamp;
 
@@ -185,33 +185,33 @@ function updateSystemStatus(status) {
 
   switch (status) {
     case 'running':
-      sysStatus.textContent = 'กำลังทำงาน';
+      sysStatus.textContent = 'Running';
       sysStatus.className = 'value green';
-      chainStatus.textContent = 'กำลังทำงาน';
+      chainStatus.textContent = 'Running';
       chainStatus.className = 'value green';
       break;
     case 'stopped':
-      sysStatus.textContent = 'หยุดทำงาน';
+      sysStatus.textContent = 'Stopped';
       sysStatus.className = 'value red';
-      chainStatus.textContent = 'หยุดทำงาน';
+      chainStatus.textContent = 'Stopped';
       chainStatus.className = 'value orange';
       break;
     case 'emergency':
-      sysStatus.textContent = 'หยุดฉุกเฉิน';
+      sysStatus.textContent = 'Emergency Stop';
       sysStatus.className = 'value red';
-      chainStatus.textContent = 'หยุดฉุกเฉิน';
+      chainStatus.textContent = 'Emergency Stop';
       chainStatus.className = 'value red';
       break;
     case 'completed':
-      sysStatus.textContent = 'เสร็จสิ้น';
+      sysStatus.textContent = 'Completed';
       sysStatus.className = 'value blue';
-      chainStatus.textContent = 'เสร็จสิ้น';
+      chainStatus.textContent = 'Completed';
       chainStatus.className = 'value blue';
       break;
     default:
-      sysStatus.textContent = 'รอดำเนินการ';
+      sysStatus.textContent = 'Pending';
       sysStatus.className = 'value orange';
-      chainStatus.textContent = 'รอคำสั่ง';
+      chainStatus.textContent = 'Waiting for order';
       chainStatus.className = 'value orange';
   }
 }
@@ -222,7 +222,7 @@ function updateSystemStatus(status) {
 // ใช้ PATCH ไม่ใช่ PUT? → เพราะแก้แค่บางฟิลด์ (สถานะ) ไม่ใช่แก้ทั้งก้อน
 async function controlAction(status) {
   if (!currentOrderId) {
-    showToast('ยังไม่มีคำสั่ง กรุณาสร้างคำสั่งจากหน้า Input ก่อน', 'error');
+    showToast('No order yet. Please create one from the Input page.', 'error');
     return;
   }
 
@@ -235,11 +235,11 @@ async function controlAction(status) {
 
     const data = await res.json();
     if (data.success) {
-      addLog('ควบคุม', `ส่งคำสั่ง ${getStatusLabel(status)} สำหรับคำสั่ง #${currentOrderId}`);
-      showToast(`สถานะระบบ: ${getStatusLabel(status)}`, status === 'running' ? 'success' : 'error');
+      addLog('Control', `Sent ${getStatusLabel(status)} command for order #${currentOrderId}`);
+      showToast(`System status: ${getStatusLabel(status)}`, status === 'running' ? 'success' : 'error');
     }
   } catch (err) {
-    showToast('ส่งคำสั่งไม่สำเร็จ', 'error');
+    showToast('Failed to send command', 'error');
     console.error(err);
   }
 }
@@ -287,43 +287,42 @@ function addLog(type, message) {
 
 function getModeLabel(mode) {
   const labels = {
-    'count': 'นับข้อโซ่',
-    'defect': 'ตรวจจับตำหนิ',
-    'both': 'นับข้อ + ตรวจตำหนิ'
+    'count': 'Count Links',
+    'defect': 'Defect Detection',
+    'both': 'Count + Defect'
   };
   return labels[mode] || mode;
 }
 
 function getStatusLabel(status) {
   const labels = {
-    'pending': 'รอดำเนินการ',
-    'running': 'กำลังทำงาน',
-    'completed': 'เสร็จสิ้น',
-    'stopped': 'หยุดทำงาน',
-    'emergency': 'หยุดฉุกเฉิน'
+    'pending': 'Pending',
+    'running': 'Running',
+    'completed': 'Completed',
+    'stopped': 'Stopped',
+    'emergency': 'Emergency Stop'
   };
   return labels[status] || status;
 }
 
 function getDefectLabel(defectType) {
   const labels = {
-    'none': 'ผ่าน',
-    'scratch': 'รอยขีดข่วน',
-    'crack': 'รอยร้าว',
-    'rust': 'สนิม',
-    'deformation': 'รูปทรงผิดปกติ'
+    'none': 'Pass',
+    'scratch': 'Scratch',
+    'crack': 'Crack',
+    'rust': 'Rust',
+    'deformation': 'Deformation'
   };
   return labels[defectType] || defectType;
 }
 
 function getColorLabel(color) {
   const labels = {
-    'silver': 'เงิน',
-    'gold': 'ทอง',
-    'black': 'ดำ',
-    'red': 'แดง',
-    'blue': 'น้ำเงิน',
-    'green': 'เขียว'
+    'red': 'Red',
+    'blue': 'Blue',
+    'green': 'Green',
+    'yellow': 'Yellow',
+    'white': 'White'
   };
   return labels[color] || color;
 }
@@ -344,7 +343,7 @@ function showToast(message, type = 'success') {
 // ค่า confidence สุ่มระหว่าง 75%-100% / chain_count สุ่ม 5-24
 async function simulateDetection() {
   if (!currentOrderId) {
-    showToast('ยังไม่มีคำสั่ง กรุณาสร้างคำสั่งจากหน้า Input ก่อน', 'error');
+    showToast('No order yet. Please create one from the Input page.', 'error');
     return;
   }
 
@@ -352,10 +351,10 @@ async function simulateDetection() {
     { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
     { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
     { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
-    { defect_type: 'scratch', defect_detail: 'รอยขีดข่วนที่ผิวข้อโซ่', image_path: '/images/demo_detect_001.svg' },
-    { defect_type: 'crack', defect_detail: 'รอยร้าวขนาดเล็กบริเวณข้อต่อ', image_path: '/images/demo_crack.svg' },
-    { defect_type: 'rust', defect_detail: 'สนิมเกาะบนผิวโซ่', image_path: '/images/demo_rust.svg' },
-    { defect_type: 'deformation', defect_detail: 'ข้อโซ่บิดงอผิดรูป', image_path: '/images/demo_detect_001.svg' },
+    { defect_type: 'scratch', defect_detail: 'Surface scratch on chain link', image_path: '/images/demo_detect_001.svg' },
+    { defect_type: 'crack', defect_detail: 'Small crack near joint area', image_path: '/images/demo_crack.svg' },
+    { defect_type: 'rust', defect_detail: 'Rust on chain surface', image_path: '/images/demo_rust.svg' },
+    { defect_type: 'deformation', defect_detail: 'Deformed chain link', image_path: '/images/demo_detect_001.svg' },
   ];
 
   const pick = scenarios[Math.floor(Math.random() * scenarios.length)];
@@ -378,10 +377,10 @@ async function simulateDetection() {
 
     const data = await res.json();
     if (data.success) {
-      showToast(`จำลองผล AI สำเร็จ: ${pick.defect_type === 'none' ? 'ผ่าน ✓' : getDefectLabel(pick.defect_type) + ' ✗'}`, pick.defect_type === 'none' ? 'success' : 'error');
+      showToast(`AI Simulation: ${pick.defect_type === 'none' ? 'Pass ✓' : getDefectLabel(pick.defect_type) + ' ✗'}`, pick.defect_type === 'none' ? 'success' : 'error');
     }
   } catch (err) {
-    showToast('จำลองผล AI ไม่สำเร็จ', 'error');
+    showToast('AI Simulation failed', 'error');
     console.error(err);
   }
 }

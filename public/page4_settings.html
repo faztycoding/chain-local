@@ -1,83 +1,83 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบนับข้อโซ่ - ตั้งค่าและบำรุงรักษา</title>
+  <title>Chain Counter - Settings & Maintenance</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="app-container">
     <div class="sidebar">
-      <h3>เมนูระบบ HMI</h3>
-      <a href="/page1_input.html" class="sidebar-btn">สั่งงานตรวจสอบ</a>
-      <a href="/page2_output.html" class="sidebar-btn">หน้าจอควบคุม</a>
-      <a href="/page3_stats.html" class="sidebar-btn">สถิติการผลิต</a>
-      <a href="/page3_stats.html?tab=history" class="sidebar-btn">แจ้งเตือน & ประวัติ</a>
-      <a href="/page4_settings.html" class="sidebar-btn active">ตั้งค่า / บำรุงรักษา</a>
+      <h3>HMI Menu</h3>
+      <a href="/page1_input.html" class="sidebar-btn">Inspection Orders</a>
+      <a href="/page2_output.html" class="sidebar-btn">Control Panel</a>
+      <a href="/page3_stats.html" class="sidebar-btn">Production Stats</a>
+      <a href="/page3_stats.html?tab=history" class="sidebar-btn">Alerts & History</a>
+      <a href="/page4_settings.html" class="sidebar-btn active">Settings / Maintenance</a>
     </div>
 
     <div class="main-content">
       <div class="page-header">
         <div>
-          <div class="page-kicker">ข้อมูลระบบและการดูแลหน้างาน</div>
-          <h1 class="page-title">ตั้งค่าระบบ & บำรุงรักษา</h1>
-          <p class="page-subtitle">หน้านี้ใช้ตรวจสอบข้อมูลระบบ, จุดเชื่อมต่อสำคัญ, และรายการเช็กก่อนใช้งาน เพื่อให้การเดโมหรือดูแลระบบต้นแบบในหน้างานทำได้ง่ายขึ้น</p>
+          <div class="page-kicker">System Information & On-site Maintenance</div>
+          <h1 class="page-title">System Settings & Maintenance</h1>
+          <p class="page-subtitle">Check system info, key endpoints, and pre-use checklists to make demos or prototype maintenance easier on-site.</p>
         </div>
         <div class="hero-pills">
           <div class="hero-pill">
-            <span>การใช้งาน</span>
-            <strong>ตรวจสถานะก่อนเดโม</strong>
+            <span>Usage</span>
+            <strong>Pre-demo status check</strong>
           </div>
           <div class="hero-pill">
-            <span>โฟกัส</span>
-            <strong>ดูแลง่าย อธิบายต่อได้</strong>
+            <span>Focus</span>
+            <strong>Easy to maintain & explain</strong>
           </div>
         </div>
       </div>
 
       <div class="mini-grid">
         <div class="mini-card">
-          <span>หน้าที่</span>
-          <strong>รวมข้อมูลระบบไว้หน้าเดียว</strong>
-          <p>ใช้เช็ก server, database, API และข้อมูลที่จำเป็นก่อนใช้งานหรือเดโม</p>
+          <span>Purpose</span>
+          <strong>All system info in one page</strong>
+          <p>Check server, database, API, and essential info before use or demo</p>
         </div>
         <div class="mini-card">
-          <span>บำรุงรักษา</span>
-          <strong>มี checklist พร้อมใช้งาน</strong>
-          <p>ช่วยให้ดูแลระบบต้นแบบหน้างานได้ง่ายขึ้นโดยไม่ต้องเปิดหลายไฟล์</p>
+          <span>Maintenance</span>
+          <strong>Ready-to-use checklist</strong>
+          <p>Maintain the prototype on-site easily without opening multiple files</p>
         </div>
         <div class="mini-card">
-          <span>เหมาะกับ</span>
-          <strong>ส่งต่อทีมและอธิบายลูกค้า</strong>
-          <p>ใช้อธิบายขอบเขตระบบและสิ่งที่ต้องเช็กก่อนเริ่มเดโมได้ชัดเจน</p>
+          <span>Best for</span>
+          <strong>Handoff to team & client</strong>
+          <p>Explain system scope and pre-demo checks clearly</p>
         </div>
       </div>
 
       <div class="panel">
-        <div class="panel-title">ข้อมูลระบบ</div>
+        <div class="panel-title">System Information</div>
         <div class="table-scroll">
           <table class="data-table">
             <tbody>
               <tr>
-                <th style="width:35%;">เซิร์ฟเวอร์หลัก</th>
-                <td>Node.js + Express บนเครื่องภายในหน้างาน</td>
+                <th style="width:35%;">Main Server</th>
+                <td>Node.js + Express running on local machine</td>
               </tr>
               <tr>
-                <th>ฐานข้อมูล</th>
-                <td>SQLite ไฟล์ <code>chain_data.db</code></td>
+                <th>Database</th>
+                <td>SQLite file <code>chain_data.db</code></td>
               </tr>
               <tr>
-                <th>พอร์ตใช้งาน</th>
+                <th>Port</th>
                 <td><code>http://localhost:3000</code></td>
               </tr>
               <tr>
-                <th>จุดเชื่อมต่อ AI</th>
+                <th>AI Endpoint</th>
                 <td><code>POST /api/detect</code></td>
               </tr>
               <tr>
-                <th>การส่งออกข้อมูล</th>
-                <td><code>GET /api/stats/export</code> และ Views สำหรับ Power BI</td>
+                <th>Data Export</th>
+                <td><code>GET /api/stats/export</code> and Views for Power BI</td>
               </tr>
             </tbody>
           </table>
@@ -85,29 +85,29 @@
       </div>
 
       <div class="panel">
-        <div class="panel-title">รายการตรวจสอบก่อนใช้งาน</div>
+        <div class="panel-title">Pre-use Checklist</div>
         <div class="table-scroll">
           <table class="data-table">
             <tbody>
               <tr>
-                <th style="width:35%;">1. เปิดเซิร์ฟเวอร์</th>
-                <td>รัน <code>npm start</code> แล้วตรวจว่าหน้าเว็บเปิดได้ทั้ง 4 หน้า</td>
+                <th style="width:35%;">1. Start Server</th>
+                <td>Run <code>npm start</code> and verify all 4 pages load correctly</td>
               </tr>
               <tr>
-                <th>2. ตรวจคำสั่งล่าสุด</th>
-                <td>เปิดหน้า Input และหน้า Output เพื่อดูว่า order ล่าสุดขึ้นตรงกัน</td>
+                <th>2. Verify Latest Order</th>
+                <td>Open Input and Output pages to verify the latest order matches</td>
               </tr>
               <tr>
-                <th>3. ตรวจการเชื่อมต่อ AI</th>
-                <td>ให้ฝั่ง YOLOv8 ยิงข้อมูลเข้า <code>/api/detect</code> แล้วดูผลที่หน้า Output</td>
+                <th>3. Test AI Connection</th>
+                <td>Have YOLOv8 send data to <code>/api/detect</code> and check results on Output page</td>
               </tr>
               <tr>
-                <th>4. ตรวจรายงาน</th>
-                <td>เปิดหน้า Stats เพื่อตรวจภาพรวม รายวัน รายสัปดาห์ รายเดือน และประวัติ</td>
+                <th>4. Check Reports</th>
+                <td>Open Stats page to verify overview, daily, weekly, monthly, and history tabs</td>
               </tr>
               <tr>
-                <th>5. สำรองข้อมูล</th>
-                <td>คัดลอกไฟล์ <code>chain_data.db</code> ออกเก็บตามรอบงาน</td>
+                <th>5. Backup Data</th>
+                <td>Copy <code>chain_data.db</code> file for backup after each session</td>
               </tr>
             </tbody>
           </table>
@@ -115,18 +115,18 @@
       </div>
 
       <div class="panel">
-        <div class="panel-title">หมายเหตุการใช้งาน</div>
+        <div class="panel-title">Usage Notes</div>
         <div style="color:#555; line-height:1.8;">
-          <p>ปุ่ม เริ่มทำงาน / หยุดทำงาน / หยุดฉุกเฉิน ยังเป็นโหมดจำลองสำหรับเดโมและทดสอบลำดับการทำงานเท่านั้น</p>
-          <p>หากต้องต่อกล้องหรือเครื่องจักรจริง ให้ใช้หน้าเว็บชุดนี้เป็นฐาน แล้วเพิ่มส่วนเชื่อมต่อฮาร์ดแวร์แยกภายหลัง</p>
-          <p>หากต้องการวิเคราะห์เชิงลึกเพิ่มเติม ให้เชื่อม Power BI เข้ากับ SQLite หรือ API ส่งออกที่ระบบเตรียมไว้</p>
+          <p>The Start / Stop / Emergency Stop buttons are currently in simulation mode for demo and workflow testing only.</p>
+          <p>To connect real cameras or machines, use this web interface as a base and add hardware integration modules separately.</p>
+          <p>For deeper analysis, connect Power BI to the SQLite database or use the export API provided by the system.</p>
         </div>
       </div>
 
       <div class="info-chip-row">
-        <div class="info-chip">พร้อมเดโมในเครื่องภายใน</div>
-        <div class="info-chip">มีจุดรับข้อมูลจาก AI</div>
-        <div class="info-chip">พร้อมสรุปรายงานต่อ</div>
+        <div class="info-chip">Ready for local demo</div>
+        <div class="info-chip">AI data endpoint available</div>
+        <div class="info-chip">Ready for report generation</div>
       </div>
     </div>
   </div>

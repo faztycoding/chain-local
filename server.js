@@ -399,7 +399,7 @@ app.get('/api/output/:id', (req, res) => {
 // → Socket.io = Server ส่งมาเอง ทันที ไม่ต้องถาม
 
 io.on('connection', (socket) => {
-  console.log(`🔌 เชื่อมต่อใหม่: ${socket.id}`);
+  console.log(`🔌 New connection: ${socket.id}`);
 
   // ส่งข้อมูลล่าสุดให้คนที่เพิ่งเปิดหน้าเว็บ → ไม่ต้องรอ event ใหม่
   // ทำไมต้องทำ? → สมมติคนเปิดหน้า Output มาทีหลัง ถ้าไม่ส่งให้เลย เขาจะเห็นหน้าว่าง
@@ -417,7 +417,7 @@ io.on('connection', (socket) => {
   }
 
   socket.on('disconnect', () => {
-    console.log(`❌ หลุดการเชื่อมต่อ: ${socket.id}`);
+    console.log(`❌ Disconnected: ${socket.id}`);
   });
 });
 
@@ -432,11 +432,11 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log('');
   console.log('='.repeat(55));
-  console.log('  🔗 ระบบนับข้อโซ่ & ตรวจจับตำหนิด้วย AI');
+  console.log('  🔗 Chain Counter & AI Defect Detection System');
   console.log('='.repeat(55));
-  console.log(`  📋 หน้าสั่งงาน:   http://localhost:${PORT}/page1_input.html`);
-  console.log(`  🖥️  หน้าควบคุม:  http://localhost:${PORT}/page2_output.html`);
-  console.log(`  📊 หน้าสถิติ:    http://localhost:${PORT}/page3_stats.html`);
+  console.log(`  📋 Orders:        http://localhost:${PORT}/page1_input.html`);
+  console.log(`  🖥️  Control Panel: http://localhost:${PORT}/page2_output.html`);
+  console.log(`  📊 Statistics:    http://localhost:${PORT}/page3_stats.html`);
   console.log(`  🤖 AI Endpoint: POST http://localhost:${PORT}/api/detect`);
   console.log('='.repeat(55));
   console.log('');

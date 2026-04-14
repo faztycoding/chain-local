@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบนับข้อโซ่ - สถิติและแดชบอร์ด</title>
+  <title>Chain Counter - Statistics & Dashboard</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -11,61 +11,32 @@
   <div class="app-container">
     <!-- แถบเมนูด้านซ้าย -->
     <div class="sidebar">
-      <h3>เมนูระบบ HMI</h3>
-      <a href="/page1_input.html" class="sidebar-btn">สั่งงานตรวจสอบ</a>
-      <a href="/page2_output.html" class="sidebar-btn">หน้าจอควบคุม</a>
-      <a href="/page3_stats.html" class="sidebar-btn active">สถิติการผลิต</a>
-      <a href="/page3_stats.html?tab=history" class="sidebar-btn">แจ้งเตือน & ประวัติ</a>
-      <a href="/page4_settings.html" class="sidebar-btn">ตั้งค่า / บำรุงรักษา</a>
+      <h3>HMI Menu</h3>
+      <a href="/page1_input.html" class="sidebar-btn">Inspection Orders</a>
+      <a href="/page2_output.html" class="sidebar-btn">Control Panel</a>
+      <a href="/page3_stats.html" class="sidebar-btn active">Production Stats</a>
+      <a href="/page3_stats.html?tab=history" class="sidebar-btn">Alerts & History</a>
     </div>
 
     <!-- เนื้อหาหลัก -->
     <div class="main-content">
       <div class="page-header">
         <div>
-          <div class="page-kicker">แดชบอร์ดวิเคราะห์คุณภาพ</div>
-          <h1 class="page-title">สถิติการผลิต & แดชบอร์ด QA</h1>
-          <p class="page-subtitle">ดูภาพรวมการตรวจสอบ, แนวโน้มตำหนิ, และรายงานในหลายช่วงเวลา</p>
-        </div>
-        <div class="hero-pills">
-          <div class="hero-pill">
-            <span>ข้อมูลสรุป</span>
-            <strong>ภาพรวมรายงานหลายมุม</strong>
-          </div>
-          <div class="hero-pill">
-            <span>เหมาะกับ</span>
-            <strong>เดโม, QA และส่งต่อ BI</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="mini-grid">
-        <div class="mini-card">
-          <span>ภาพรวม</span>
-          <strong>ดูรายงานหลายมุมในหน้าเดียว</strong>
-          <p>สรุปตัวเลขสำคัญ, กราฟ, และประวัติในหน้าเดียว</p>
-        </div>
-        <div class="mini-card">
-          <span>วิเคราะห์</span>
-          <strong>เช็กแนวโน้มรายวันถึงรายเดือน</strong>
-          <p>เช็กแนวโน้มคุณภาพรายวันถึงรายเดือน</p>
-        </div>
-        <div class="mini-card">
-          <span>ต่อยอด</span>
-          <strong>พร้อมส่งต่อ BI และสรุปงาน</strong>
-          <p>พร้อมส่งต่อ Power BI หรือรายงานจริงได้</p>
+          <div class="page-kicker">Quality Analysis Dashboard</div>
+          <h1 class="page-title">Production Statistics & QA Dashboard</h1>
+          <p class="page-subtitle">View inspection overview, defect trends, and reports across multiple time periods</p>
         </div>
       </div>
 
 
       <!-- แท็บเมนู -->
       <div class="nav-tabs">
-        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview', this)">ภาพรวม</button>
-        <button class="nav-tab" data-tab="pchart" onclick="switchTab('pchart', this)">กราฟควบคุม (p-chart)</button>
-        <button class="nav-tab" data-tab="daily" onclick="switchTab('daily', this)">รายงานประจำวัน</button>
-        <button class="nav-tab" data-tab="weekly" onclick="switchTab('weekly', this)">รายงานรายสัปดาห์</button>
-        <button class="nav-tab" data-tab="monthly" onclick="switchTab('monthly', this)">รายงานรายเดือน</button>
-        <button class="nav-tab" data-tab="history" onclick="switchTab('history', this)">ประวัติการตรวจสอบ</button>
+        <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview', this)">Overview</button>
+        <button class="nav-tab" data-tab="pchart" onclick="switchTab('pchart', this)">Control Chart (p-chart)</button>
+        <button class="nav-tab" data-tab="daily" onclick="switchTab('daily', this)">Daily Report</button>
+        <button class="nav-tab" data-tab="weekly" onclick="switchTab('weekly', this)">Weekly Report</button>
+        <button class="nav-tab" data-tab="monthly" onclick="switchTab('monthly', this)">Monthly Report</button>
+        <button class="nav-tab" data-tab="history" onclick="switchTab('history', this)">Inspection History</button>
       </div>
 
       <!-- แท็บ: ภาพรวม -->
@@ -73,50 +44,51 @@
         <div class="summary-row">
           <div class="summary-card">
             <div class="number" id="totalOrders">0</div>
-            <div class="desc">คำสั่งทั้งหมด</div>
+            <div class="desc">Total Orders</div>
           </div>
           <div class="summary-card">
             <div class="number" id="totalInspections">0</div>
-            <div class="desc">ตรวจสอบทั้งหมด</div>
+            <div class="desc">Total Inspections</div>
           </div>
           <div class="summary-card">
             <div class="number" id="totalDefects" style="color:#e74c3c;">0</div>
-            <div class="desc">ตำหนิทั้งหมด</div>
+            <div class="desc">Defective Inspections</div>
+            <div style="font-size:11px; color:#aaa; margin-top:2px;">Per inspection (not per defect point)</div>
           </div>
           <div class="summary-card">
             <div class="number" id="defectRate">0%</div>
-            <div class="desc">อัตราของเสีย</div>
+            <div class="desc">Defect Rate</div>
           </div>
           <div class="summary-card">
             <div class="number" id="avgConfidence">0%</div>
-            <div class="desc">ความมั่นใจเฉลี่ย</div>
+            <div class="desc">Avg. Confidence</div>
           </div>
         </div>
 
         <div class="empty-state-card" id="overviewFirstUseState">
           <div class="empty-state-icon">📊</div>
-          <div class="empty-state-title">ยังไม่มีข้อมูลสถิติ</div>
-          <div class="empty-state-text">สร้างคำสั่งและส่งผลตรวจจาก AI ก่อน แล้วกราฟและรายงานจะเริ่มแสดงที่นี่</div>
+          <div class="empty-state-title">No Statistics Available</div>
+          <div class="empty-state-text">Create an order and send AI detection results first. Charts and reports will appear here.</div>
           <div class="empty-state-actions">
-            <a href="/page1_input.html" class="btn btn-primary">ไปหน้าสั่งงานตรวจสอบ</a>
+            <a href="/page1_input.html" class="btn btn-primary">Go to Inspection Orders</a>
           </div>
         </div>
 
         <div class="stats-grid">
           <div class="chart-box">
-            <h3>อัตราตำหนิแยกตามสีโซ่</h3>
+            <h3>Defect Rate by Inspection Light Color</h3>
             <canvas id="chartDefectByColor"></canvas>
           </div>
           <div class="chart-box">
-            <h3>จำนวนการตรวจสอบรายวัน</h3>
+            <h3>Daily Inspection Count</h3>
             <canvas id="chartDailyCount"></canvas>
           </div>
           <div class="chart-box">
-            <h3>สัดส่วนตำหนิ vs ผ่าน</h3>
+            <h3>Defect vs Pass Ratio</h3>
             <canvas id="chartDefectRatio"></canvas>
           </div>
           <div class="chart-box">
-            <h3>แนวโน้มความมั่นใจการตรวจจับ</h3>
+            <h3>Detection Confidence Trend</h3>
             <canvas id="chartConfidenceTrend"></canvas>
           </div>
         </div>
@@ -125,29 +97,29 @@
       <!-- แท็บ: กราฟควบคุม -->
       <div class="tab-content" id="tab-pchart">
         <div class="panel">
-          <div class="panel-title">กราฟควบคุม p-Chart (สัดส่วนของเสียต่อจำนวนตรวจสอบ)</div>
+          <div class="panel-title">p-Chart (Defect proportion per inspection batch)</div>
           <p style="color:#888; margin-bottom:15px;">
-            กราฟนี้แสดงสัดส่วนของเสียต่อจำนวนตรวจสอบในแต่ละวัน
-            UCL (ขีดจำกัดควบคุมบน) และ LCL (ขีดจำกัดควบคุมล่าง) คำนวณที่ 3-sigma
+            This chart shows the defect proportion per inspection batch each day.
+            UCL (Upper Control Limit) and LCL (Lower Control Limit) are calculated at 3-sigma.
           </p>
           <canvas id="chartPchart" style="max-height:400px;"></canvas>
         </div>
 
         <div class="panel">
-          <div class="panel-title">ตารางข้อมูล p-Chart</div>
+          <div class="panel-title">p-Chart Data Table</div>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>วันที่</th>
-                  <th>จำนวนตัวอย่าง (n)</th>
-                  <th>จำนวนตำหนิ</th>
-                  <th>สัดส่วน (p)</th>
-                  <th>สถานะ</th>
+                  <th>Date</th>
+                  <th>Sample Size (n)</th>
+                  <th>Defect Count</th>
+                  <th>Proportion (p)</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody id="pchartTable">
-                <tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+                <tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -155,21 +127,21 @@
 
         <!-- บทวิเคราะห์ -->
         <div class="panel">
-          <div class="panel-title">บทวิเคราะห์ข้อมูล & ข้อแนะนำ</div>
+          <div class="panel-title">Analysis & Recommendations</div>
           <div id="analysisContent" style="color:#555; line-height:1.8;">
-            <p><strong>วิธีอ่านกราฟนี้:</strong></p>
+            <p><strong>How to read this chart:</strong></p>
             <ul style="margin-left:20px; margin-top:8px;">
-              <li><strong>จุดที่อยู่ระหว่าง UCL และ LCL:</strong> กระบวนการอยู่ในการควบคุม - ความแปรปรวนปกติ</li>
-              <li><strong>จุดที่อยู่เหนือ UCL:</strong> อัตราของเสียสูงผิดปกติ - ต้องสอบสวนหาสาเหตุ (วัตถุดิบ, เครื่องจักร, พนักงาน)</li>
-              <li><strong>จุดที่อยู่ต่ำกว่า LCL:</strong> อัตราของเสียต่ำผิดปกติ - หาสาเหตุว่าทำไมดีเพื่อนำไปทำซ้ำ</li>
-              <li><strong>แนวโน้ม:</strong> จุดต่อเนื่องกัน 7 จุดขึ้น/ลงต่อเนื่อง บ่งบอกว่ากระบวนการเปลี่ยนแปลง</li>
+              <li><strong>Points between UCL and LCL:</strong> Process is in control - normal variation</li>
+              <li><strong>Points above UCL:</strong> Abnormally high defect rate - investigate root cause (materials, machine, operator)</li>
+              <li><strong>Points below LCL:</strong> Abnormally low defect rate - find out why and replicate</li>
+              <li><strong>Trends:</strong> 7 consecutive points rising/falling indicate a process shift</li>
             </ul>
-            <p style="margin-top:15px;"><strong>ข้อแนะนำหลังได้รับข้อมูลแล้ว:</strong></p>
+            <p style="margin-top:15px;"><strong>Recommendations after collecting data:</strong></p>
             <ul style="margin-left:20px; margin-top:8px;">
-              <li>ใช้ Power BI สร้างแดชบอร์ดแบบเจาะลึกจากฐานข้อมูล SQLite</li>
-              <li>เปรียบเทียบอัตราตำหนิระหว่างสีโซ่และขนาดต่างๆ</li>
-              <li>ติดตามแนวโน้มรายสัปดาห์/รายเดือน เพื่อปรับปรุงกระบวนการผลิต</li>
-              <li>ตั้งการแจ้งเตือนเมื่ออัตราตำหนิเกินเกณฑ์ที่ยอมรับได้</li>
+              <li>Use Power BI to create detailed dashboards from the SQLite database</li>
+              <li>Compare defect rates between different chain colors and sizes</li>
+              <li>Track weekly/monthly trends to improve production processes</li>
+              <li>Set up alerts when defect rate exceeds acceptable thresholds</li>
             </ul>
           </div>
         </div>
@@ -178,25 +150,25 @@
       <!-- แท็บ: รายงานประจำวัน -->
       <div class="tab-content" id="tab-daily">
         <div class="panel">
-          <div class="panel-title">รายงานสรุปประจำวัน (QA)</div>
+          <div class="panel-title">Daily QA Summary Report</div>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>วันที่</th>
-                  <th>สี</th>
-                  <th>ขนาด</th>
-                  <th>โหมด</th>
-                  <th>ตรวจทั้งหมด</th>
-                  <th>ผ่าน</th>
-                  <th>ตำหนิ</th>
-                  <th>อัตราตำหนิ (%)</th>
-                  <th>ความมั่นใจเฉลี่ย (%)</th>
-                  <th>โซ่ที่นับได้</th>
+                  <th>Date</th>
+                  <th>Color</th>
+                  <th>Size</th>
+                  <th>Mode</th>
+                  <th>Total Inspected</th>
+                  <th>Pass</th>
+                  <th>Defect</th>
+                  <th>Defect Rate (%)</th>
+                  <th>Avg. Confidence (%)</th>
+                  <th>Chains Counted</th>
                 </tr>
               </thead>
               <tbody id="dailyTable">
-                <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+                <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -205,23 +177,23 @@
 
       <div class="tab-content" id="tab-weekly">
         <div class="panel">
-          <div class="panel-title">รายงานสรุปรายสัปดาห์</div>
+          <div class="panel-title">Weekly Summary Report</div>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>สัปดาห์</th>
-                  <th>ช่วงวันที่</th>
-                  <th>ตรวจทั้งหมด</th>
-                  <th>ผ่าน</th>
-                  <th>ตำหนิ</th>
-                  <th>อัตราตำหนิ (%)</th>
-                  <th>ความมั่นใจเฉลี่ย (%)</th>
-                  <th>โซ่ที่นับได้</th>
+                  <th>Week</th>
+                  <th>Date Range</th>
+                  <th>Total Inspected</th>
+                  <th>Pass</th>
+                  <th>Defect</th>
+                  <th>Defect Rate (%)</th>
+                  <th>Avg. Confidence (%)</th>
+                  <th>Chains Counted</th>
                 </tr>
               </thead>
               <tbody id="weeklyTable">
-                <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+                <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -230,22 +202,22 @@
 
       <div class="tab-content" id="tab-monthly">
         <div class="panel">
-          <div class="panel-title">รายงานสรุปรายเดือน</div>
+          <div class="panel-title">Monthly Summary Report</div>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>เดือน</th>
-                  <th>ตรวจทั้งหมด</th>
-                  <th>ผ่าน</th>
-                  <th>ตำหนิ</th>
-                  <th>อัตราตำหนิ (%)</th>
-                  <th>ความมั่นใจเฉลี่ย (%)</th>
-                  <th>โซ่ที่นับได้</th>
+                  <th>Month</th>
+                  <th>Total Inspected</th>
+                  <th>Pass</th>
+                  <th>Defect</th>
+                  <th>Defect Rate (%)</th>
+                  <th>Avg. Confidence (%)</th>
+                  <th>Chains Counted</th>
                 </tr>
               </thead>
               <tbody id="monthlyTable">
-                <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+                <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -255,24 +227,24 @@
       <!-- แท็บ: ประวัติการตรวจสอบ -->
       <div class="tab-content" id="tab-history">
         <div class="panel">
-          <div class="panel-title">ประวัติการตรวจสอบล่าสุด</div>
+          <div class="panel-title">Recent Inspection History</div>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>รหัส</th>
-                  <th>คำสั่ง</th>
-                  <th>เวลา</th>
-                  <th>สี</th>
-                  <th>ขนาด</th>
-                  <th>จำนวนข้อ</th>
-                  <th>ประเภทตำหนิ</th>
-                  <th>ความมั่นใจ</th>
-                  <th>สถานะ</th>
+                  <th>ID</th>
+                  <th>Order</th>
+                  <th>Time</th>
+                  <th>Color</th>
+                  <th>Size</th>
+                  <th>Links</th>
+                  <th>Defect Type</th>
+                  <th>Confidence</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody id="historyTable">
-                <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล</td></tr>
+                <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>

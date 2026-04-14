@@ -38,7 +38,7 @@ document.getElementById('orderForm').addEventListener('submit', async (e) => {
   // ทำไมต้องเช็คทั้งที่ HTML มี required แล้ว?
   // → เพราะ required ข้ามได้ง่ายผ่าน DevTools จึงต้องเช็คซ้ำใน JS ด้วย
   if (!mode || !chain_size || !chain_color) {
-    showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบ', 'error');
+    showToast('Please fill in all required fields', 'error');
     return;
   }
 
@@ -56,14 +56,14 @@ document.getElementById('orderForm').addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (data.success) {
-      showToast(`คำสั่ง #${data.order.id} สร้างสำเร็จแล้ว!`, 'success');
+      showToast(`Order #${data.order.id} created successfully!`, 'success');
       document.getElementById('orderForm').reset(); // เคลียร์ฟอร์มเพื่อกรอกใหม่
       loadOrders(); // โหลดตารางใหม่เพื่อแสดงคำสั่งที่เพิ่งสร้าง
     } else {
-      showToast(data.error || 'สร้างคำสั่งไม่สำเร็จ', 'error');
+      showToast(data.error || 'Failed to create order', 'error');
     }
   } catch (err) {
-    showToast('เชื่อมต่อ Server ไม่ได้', 'error');
+    showToast('Cannot connect to server', 'error');
     console.error(err);
   }
 });
@@ -79,7 +79,7 @@ async function loadOrders() {
     const tbody = document.getElementById('ordersTable');
 
     if (orders.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ระบบยังไม่เคยสร้างคำสั่งตรวจสอบ ให้เริ่มใช้งานโดยกรอกฟอร์มด้านบน</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">No inspection orders yet. Use the form above to create one.</td></tr>';
       return;
     }
 
@@ -106,32 +106,31 @@ async function loadOrders() {
 // ทำไมทำเป็นฟังก์ชันแยก? → เพราะใช้ซ้ำได้หลายที่ ทั้งหน้า Input และ Output
 function getModeLabel(mode) {
   const labels = {
-    'count': 'นับข้อโซ่',
-    'defect': 'ตรวจจับตำหนิ',
-    'both': 'นับข้อ + ตรวจตำหนิ'
+    'count': 'Count Links',
+    'defect': 'Defect Detection',
+    'both': 'Count + Defect'
   };
   return labels[mode] || mode;
 }
 
 function getStatusLabel(status) {
   const labels = {
-    'pending': 'รอดำเนินการ',
-    'running': 'กำลังทำงาน',
-    'completed': 'เสร็จสิ้น',
-    'stopped': 'หยุดทำงาน',
-    'emergency': 'หยุดฉุกเฉิน'
+    'pending': 'Pending',
+    'running': 'Running',
+    'completed': 'Completed',
+    'stopped': 'Stopped',
+    'emergency': 'Emergency Stop'
   };
   return labels[status] || status;
 }
 
 function getColorLabel(color) {
   const labels = {
-    'silver': 'เงิน',
-    'gold': 'ทอง',
-    'black': 'ดำ',
-    'red': 'แดง',
-    'blue': 'น้ำเงิน',
-    'green': 'เขียว'
+    'red': 'Red',
+    'blue': 'Blue',
+    'green': 'Green',
+    'yellow': 'Yellow',
+    'white': 'White'
   };
   return labels[color] || color;
 }

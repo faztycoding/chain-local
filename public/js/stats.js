@@ -55,43 +55,42 @@ function setOverviewFirstUseState(isFirstUse) {
 
 function getModeLabel(mode) {
   const labels = {
-    'count': 'นับข้อโซ่',
-    'defect': 'ตรวจจับตำหนิ',
-    'both': 'นับข้อ + ตรวจตำหนิ'
+    'count': 'Count Links',
+    'defect': 'Defect Detection',
+    'both': 'Count + Defect'
   };
   return labels[mode] || mode;
 }
 
 function getStatusLabel(status) {
   const labels = {
-    'pending': 'รอดำเนินการ',
-    'running': 'กำลังทำงาน',
-    'completed': 'เสร็จสิ้น',
-    'stopped': 'หยุดทำงาน',
-    'emergency': 'หยุดฉุกเฉิน'
+    'pending': 'Pending',
+    'running': 'Running',
+    'completed': 'Completed',
+    'stopped': 'Stopped',
+    'emergency': 'Emergency Stop'
   };
   return labels[status] || status;
 }
 
 function getDefectLabel(defectType) {
   const labels = {
-    'none': 'ผ่าน',
-    'scratch': 'รอยขีดข่วน',
-    'crack': 'รอยร้าว',
-    'rust': 'สนิม',
-    'deformation': 'รูปทรงผิดปกติ'
+    'none': 'Pass',
+    'scratch': 'Scratch',
+    'crack': 'Crack',
+    'rust': 'Rust',
+    'deformation': 'Deformation'
   };
   return labels[defectType] || defectType;
 }
 
 function getColorLabel(color) {
   const labels = {
-    'silver': 'เงิน',
-    'gold': 'ทอง',
-    'black': 'ดำ',
-    'red': 'แดง',
-    'blue': 'น้ำเงิน',
-    'green': 'เขียว'
+    'red': 'Red',
+    'blue': 'Blue',
+    'green': 'Green',
+    'yellow': 'Yellow',
+    'white': 'White'
   };
   return labels[color] || color;
 }
@@ -161,16 +160,16 @@ function renderDefectByColor(data) {
   if (chartDefectByColor) chartDefectByColor.destroy();
 
   const colorMap = {
-    'silver': '#c0c0c0', 'gold': '#ffd700', 'black': '#333',
-    'red': '#e74c3c', 'blue': '#3498db', 'green': '#27ae60'
+    'red': '#e74c3c', 'blue': '#3498db', 'green': '#27ae60',
+    'yellow': '#f1c40f', 'white': '#bdc3c7'
   };
 
   chartDefectByColor = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: data.map(d => getColorLabel(d.chain_color)),
+      labels: data.map(d => getColorLabel(d.chain_color) + ' Light'),
       datasets: [{
-        label: 'อัตราตำหนิ (%)',
+        label: 'Defect Rate (%)',
         data: data.map(d => d.defect_rate_percent),
         backgroundColor: data.map(d => colorMap[d.chain_color] || '#2c3e6b'),
         borderRadius: 4
@@ -180,7 +179,7 @@ function renderDefectByColor(data) {
       responsive: true,
       plugins: { legend: { display: false } },
       scales: {
-        y: { beginAtZero: true, title: { display: true, text: 'อัตราตำหนิ (%)' } }
+        y: { beginAtZero: true, title: { display: true, text: 'Defect Rate (%)' } }
       }
     }
   });
@@ -209,7 +208,7 @@ function renderDailyCount(data) {
       labels: dates,
       datasets: [
         {
-          label: 'จำนวนตรวจทั้งหมด',
+          label: 'Total Inspections',
           data: dates.map(d => dateMap[d].total),
           borderColor: '#2c3e6b',
           backgroundColor: 'rgba(44,62,107,0.1)',
@@ -217,7 +216,7 @@ function renderDailyCount(data) {
           tension: 0.3
         },
         {
-          label: 'จำนวนตำหนิ',
+          label: 'Defect Count',
           data: dates.map(d => dateMap[d].defect),
           borderColor: '#e74c3c',
           backgroundColor: 'rgba(231,76,60,0.1)',
@@ -242,7 +241,7 @@ function renderDefectRatio(defects, passes) {
   chartDefectRatio = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['ผ่าน', 'ตำหนิ'],
+      labels: ['Pass', 'Defect'],
       datasets: [{
         data: [passes, defects],
         backgroundColor: ['#27ae60', '#e74c3c'],
@@ -280,7 +279,7 @@ function renderConfidenceTrend(data) {
     data: {
       labels: dates,
       datasets: [{
-        label: 'ความมั่นใจเฉลี่ย (%)',
+        label: 'Avg. Confidence (%)',
         data: avgValues,
         borderColor: '#f39c12',
         backgroundColor: 'rgba(243,156,18,0.1)',
@@ -291,7 +290,7 @@ function renderConfidenceTrend(data) {
     options: {
       responsive: true,
       scales: {
-        y: { beginAtZero: true, max: 100, title: { display: true, text: 'ความมั่นใจ (%)' } }
+        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Confidence (%)' } }
       }
     }
   });
@@ -311,7 +310,7 @@ async function loadPchartData() {
 
     if (data.length === 0) {
       const tbody = document.getElementById('pchartTable');
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีข้อมูล p-chart เพราะระบบยังไม่เคยรับผลตรวจ</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#aaa; padding:20px;">No p-chart data yet. No inspection results received.</td></tr>';
       return;
     }
 
@@ -338,7 +337,7 @@ async function loadPchartData() {
         labels: dates,
         datasets: [
           {
-            label: 'สัดส่วนของเสีย (p)',
+            label: 'Defect Proportion (p)',
             data: proportions,
             borderColor: '#2c3e6b',
             backgroundColor: 'rgba(44,62,107,0.1)',
@@ -348,7 +347,7 @@ async function loadPchartData() {
             tension: 0
           },
           {
-            label: 'ค่าเฉลี่ยกลาง (p-bar)',
+            label: 'Center Line (p-bar)',
             data: dates.map(() => pBar.toFixed(4)),
             borderColor: '#27ae60',
             borderDash: [5, 5],
@@ -356,7 +355,7 @@ async function loadPchartData() {
             fill: false
           },
           {
-            label: 'UCL (ขีดควบคุมบน)',
+            label: 'UCL (Upper Control Limit)',
             data: dates.map(() => ucl.toFixed(4)),
             borderColor: '#e74c3c',
             borderDash: [10, 5],
@@ -364,7 +363,7 @@ async function loadPchartData() {
             fill: false
           },
           {
-            label: 'LCL (ขีดควบคุมล่าง)',
+            label: 'LCL (Lower Control Limit)',
             data: dates.map(() => lcl.toFixed(4)),
             borderColor: '#e74c3c',
             borderDash: [10, 5],
@@ -381,10 +380,10 @@ async function loadPchartData() {
         scales: {
           y: {
             beginAtZero: true,
-            title: { display: true, text: 'สัดส่วนของเสีย (p)' }
+            title: { display: true, text: 'Defect Proportion (p)' }
           },
           x: {
-            title: { display: true, text: 'วันที่เก็บตัวอย่าง' }
+            title: { display: true, text: 'Sample Date' }
           }
         }
       }
@@ -400,7 +399,7 @@ async function loadPchartData() {
           <td>${d.sample_size}</td>
           <td>${d.defect_count}</td>
           <td>${d.defect_proportion.toFixed(4)}</td>
-          <td><span class="badge ${outOfControl ? 'badge-defect' : 'badge-pass'}">${outOfControl ? 'เกินขีดควบคุม' : 'อยู่ในขีดควบคุม'}</span></td>
+          <td><span class="badge ${outOfControl ? 'badge-defect' : 'badge-pass'}">${outOfControl ? 'Out of Control' : 'In Control'}</span></td>
         </tr>
       `;
     }).join('');
@@ -421,7 +420,7 @@ async function loadDailyReport() {
 
     const tbody = document.getElementById('dailyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีรายงานประจำวัน เพราะระบบยังไม่เคยรับผลตรวจ</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">No daily report yet. No inspection results received.</td></tr>';
       return;
     }
 
@@ -452,14 +451,14 @@ async function loadWeeklyReport() {
 
     const tbody = document.getElementById('weeklyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีรายงานรายสัปดาห์ เพราะระบบยังไม่เคยมีข้อมูลสะสม</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">No weekly report yet. Not enough data accumulated.</td></tr>';
       return;
     }
 
     tbody.innerHTML = data.map(d => `
       <tr>
         <td>${d.report_week}</td>
-        <td>${d.week_start_date} ถึง ${d.week_end_date}</td>
+        <td>${d.week_start_date} to ${d.week_end_date}</td>
         <td>${d.total_inspections}</td>
         <td>${d.pass_count}</td>
         <td>${d.defect_count}</td>
@@ -481,7 +480,7 @@ async function loadMonthlyReport() {
 
     const tbody = document.getElementById('monthlyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีรายงานรายเดือน เพราะระบบยังไม่เคยมีข้อมูลสะสม</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">No monthly report yet. Not enough data accumulated.</td></tr>';
       return;
     }
 
@@ -512,7 +511,7 @@ async function loadHistory() {
 
     const tbody = document.getElementById('historyTable');
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">ยังไม่มีประวัติการตรวจสอบ เพราะระบบยังไม่เคยถูกใช้งาน</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">No inspection history yet. System has not been used.</td></tr>';
       return;
     }
 
