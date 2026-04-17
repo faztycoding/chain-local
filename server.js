@@ -240,6 +240,28 @@ app.post('/api/detect', (req, res) => {
   }
 });
 
+// --- รีเซตระบบ (ล้างข้อมูลทั้งหมด) ---
+// ใช้เมื่อ: ต้องการเริ่มใหม่หมด เหมือนยังไม่เคยใช้งาน
+// ทำอะไร: ลบข้อมูลใน orders + inspection_results + reset auto-increment
+// ทำไมไม่ลบไฟล์ DB: เพราะอยากรักษา schema (โครงสร้างตาราง + view) ไว้
+app.post('/api/admin/reset', (req, res) => {
+  try {
+    db.exec(`
+      DELETE FROM inspection_results;
+      DELETE FROM orders;
+      DELETE FROM sqlite_sequence WHERE name IN ('orders', 'inspection_results');
+    `);
+
+    // แจ้งทุกหน้าเว็บว่าระบบถูก reset แล้ว → หน้าเว็บควรรีเฟรช
+    io.emit('system_reset', { message: 'System has been reset' });
+
+    console.log('🧹 System reset: all orders and inspection results cleared');
+    res.json({ success: true, message: 'All data cleared. System reset to initial state.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- สถิติและรายงาน ---
 // API กลุ่มนี้ดึงข้อมูลจาก View ในฐานข้อมูล
 // View คืออะไร? → เหมือนตารางสำเร็จรูปที่คำนวณไว้ล่วงหน้า

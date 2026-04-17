@@ -117,7 +117,7 @@ function getStatusLabel(status) {
   const labels = {
     'pending': 'Pending',
     'running': 'Running',
-    'completed': 'Completed',
+    'completed': 'Finished',
     'stopped': 'Stopped',
     'emergency': 'Emergency Stop'
   };
@@ -152,6 +152,34 @@ function showToast(message, type = 'success') {
 socket.on('new_order', (order) => {
   loadOrders();
 });
+
+// ฟังเหตุการณ์ "ระบบถูกรีเซต" → รีโหลดตารางให้ว่าง
+socket.on('system_reset', () => {
+  loadOrders();
+  showToast('System has been reset', 'success');
+});
+
+// รีเซตระบบทั้งหมด: ล้างคำสั่งและผลการตรวจสอบทั้งหมด
+// ใช้เมื่อ: ต้องการเริ่มใหม่หมด เหมือนเปิดใช้ครั้งแรก
+async function resetSystem() {
+  const confirmed = confirm('Reset System?\n\nThis will permanently delete:\n- All inspection orders\n- All AI detection results\n- All statistics data\n\nThis action cannot be undone.');
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch('/api/admin/reset', { method: 'POST' });
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast('System reset successfully', 'success');
+      loadOrders();
+    } else {
+      showToast(data.error || 'Reset failed', 'error');
+    }
+  } catch (err) {
+    showToast('Cannot connect to server', 'error');
+    console.error(err);
+  }
+}
 
 // โหลดรายการคำสั่งครั้งแรกตอนเปิดหน้า
 // ทำไมต้องเรียกตรงนี้? → เพราะเมื่อเปิดหน้า ตารางยังว่าง

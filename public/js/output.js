@@ -99,6 +99,12 @@ socket.on('new_order', (order) => {
   showToast(`New order #${order.id} received!`, 'success');
 });
 
+// รับเหตุการณ์ "ระบบถูกรีเซต" → รีโหลดหน้าให้กลับสู่สภาพแรก
+socket.on('system_reset', () => {
+  showToast('System has been reset. Reloading...', 'success');
+  setTimeout(() => location.reload(), 1500);
+});
+
 // รับการเปลี่ยนสถานะ (เมื่อกดปุ่ม เริ่ม/หยุด/ฉุกเฉิน)
 socket.on('order_status_changed', (order) => {
   if (order.id === currentOrderId) {
@@ -203,9 +209,9 @@ function updateSystemStatus(status) {
       chainStatus.className = 'value red';
       break;
     case 'completed':
-      sysStatus.textContent = 'Completed';
+      sysStatus.textContent = 'Finished';
       sysStatus.className = 'value blue';
-      chainStatus.textContent = 'Completed';
+      chainStatus.textContent = 'Finished';
       chainStatus.className = 'value blue';
       break;
     default:
@@ -298,7 +304,7 @@ function getStatusLabel(status) {
   const labels = {
     'pending': 'Pending',
     'running': 'Running',
-    'completed': 'Completed',
+    'completed': 'Finished',
     'stopped': 'Stopped',
     'emergency': 'Emergency Stop'
   };

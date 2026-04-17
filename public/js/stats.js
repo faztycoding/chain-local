@@ -66,7 +66,7 @@ function getStatusLabel(status) {
   const labels = {
     'pending': 'Pending',
     'running': 'Running',
-    'completed': 'Completed',
+    'completed': 'Finished',
     'stopped': 'Stopped',
     'emergency': 'Emergency Stop'
   };
