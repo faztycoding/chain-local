@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chain Counter - Database Viewer</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .db-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .db-btn {
+      padding: 8px 16px;
+      border: 1px solid #cfd8ea;
+      background: #fff;
+      color: #1e3a5f;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .db-btn:hover { background: #eef3fb; }
+    .db-btn.active { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+    .db-info {
+      margin-left: auto;
+      font-size: 13px;
+      color: #667;
+    }
+    .db-stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .db-stat-card {
+      background: linear-gradient(135deg, #f6f9ff 0%, #e8f0fe 100%);
+      border: 1px solid #cfd8ea;
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .db-stat-card .label {
+      font-size: 12px;
+      color: #667;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .db-stat-card .value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1e3a5f;
+    }
+    .db-section { display: none; }
+    .db-section.active { display: block; }
+    pre.json-view {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 500px;
+      font-family: Menlo, Monaco, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="sidebar">
+      <h3>HMI Menu</h3>
+      <a href="/page1_input.html" class="sidebar-btn">Inspection Orders</a>
+      <a href="/page2_output.html" class="sidebar-btn">Control Panel</a>
+      <a href="/page3_stats.html" class="sidebar-btn">Production Stats</a>
+      <a href="/page3_stats.html?tab=history" class="sidebar-btn">Alerts & History</a>
+      <a href="/page4_database.html" class="sidebar-btn active">Database Viewer</a>
+    </div>
+
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-kicker">Raw Database Access</div>
+          <h1 class="page-title">Database Viewer</h1>
+          <p class="page-subtitle">Inspect all data stored in the SQLite database — orders, AI inspection results, and summary views.</p>
+        </div>
+      </div>
+
+      <!-- Database stats summary -->
+      <div class="db-stat-row" id="dbStats">
+        <div class="db-stat-card">
+          <div class="label">Total Orders</div>
+          <div class="value" id="countOrders">0</div>
+        </div>
+        <div class="db-stat-card">
+          <div class="label">Total Inspections</div>
+          <div class="value" id="countInspections">0</div>
+        </div>
+        <div class="db-stat-card">
+          <div class="label">Database File</div>
+          <div class="value" style="font-size:14px;">chain_data.db</div>
+        </div>
+        <div class="db-stat-card">
+          <div class="label">Last Refreshed</div>
+          <div class="value" id="lastRefresh" style="font-size:14px;">-</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="db-toolbar">
+        <button class="db-btn active" data-table="orders" onclick="switchTable('orders')">Orders Table</button>
+        <button class="db-btn" data-table="inspections" onclick="switchTable('inspections')">Inspection Results</button>
+        <button class="db-btn" data-table="raw" onclick="switchTable('raw')">Raw JSON</button>
+        <button class="db-btn" onclick="loadData()" style="margin-left:auto;">🔄 Refresh</button>
+        <button class="db-btn" onclick="exportJSON()">⬇ Export JSON</button>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="db-section active" id="section-orders">
+        <div class="panel">
+          <div class="panel-title">orders (Inspection Orders)</div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Mode</th>
+                  <th>Chain Size</th>
+                  <th>Light Color</th>
+                  <th>Product Details</th>
+                  <th>Chain Count</th>
+                  <th>Defective Inspections</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Updated At</th>
+                </tr>
+              </thead>
+              <tbody id="ordersBody">
+                <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspection Results Table -->
+      <div class="db-section" id="section-inspections">
+        <div class="panel">
+          <div class="panel-title">inspection_results (AI Detection Records)</div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Order ID</th>
+                  <th>Chain Count</th>
+                  <th>Defect Type</th>
+                  <th>Defect Detail</th>
+                  <th>Confidence</th>
+                  <th>Image Path</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="inspectionsBody">
+                <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw JSON View -->
+      <div class="db-section" id="section-raw">
+        <div class="panel">
+          <div class="panel-title">Raw JSON — All Tables</div>
+          <pre class="json-view" id="rawJson">Loading...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/database.js"></script>
+</body>
+</html>
