@@ -71,11 +71,54 @@ function initDatabase() {
       chain_count INTEGER DEFAULT 0,
       defect_type TEXT DEFAULT 'none',
       defect_detail TEXT,
+      defect_count INTEGER DEFAULT 0,
       confidence REAL DEFAULT 0.0,
       image_path TEXT,
       FOREIGN KEY (order_id) REFERENCES orders(id)
     );
   `);
+
+  // Migration: เพิ่มคอลัมน์ defect_count ถ้ายังไม่มี (สำหรับฐานข้อมูลเก่า)
+  // ทำไม try-catch? → ถ้าคอลัมน์มีอยู่แล้ว SQLite จะ throw error ปกติ
+  try {
+    db.exec(`ALTER TABLE inspection_results ADD COLUMN defect_count INTEGER DEFAULT 0;`);
+  } catch (e) { /* คอลัมน์มีแล้ว ข้ามได้ */ }
+
+  // สร้างตาราง defect_points (จุดตำหนิแต่ละจุด)
+  // เก็บข้อมูลทุกจุด defect ที่ AI ตรวจเจอ พร้อมเลขข้อโซ่และเวลา
+  //
+  // ทำไมต้องมีตารางนี้?
+  // → เพราะ 1 เส้นโซ่อาจมี defect ได้หลายจุด (เช่น รอย 3 จุดในเส้นเดียว)
+  // → ต้องการดูได้ว่า "จุดที่ X อยู่ที่ข้อไหน เวลาเท่าไหร่ ประเภทอะไร"
+  // → ตาราง inspection_results เก็บแค่สรุประดับ "เส้น" ไม่พอ
+  //
+  // ความสัมพันธ์:
+  // - 1 inspection_result → มีได้ 0..N defect_points
+  // - defect_count ใน inspection_results = COUNT(*) ของ defect_points ที่ link กับ inspection นี้
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS defect_points (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      inspection_id INTEGER NOT NULL,
+      order_id INTEGER NOT NULL,
+      link_number INTEGER,
+      defect_type TEXT NOT NULL,
+      defect_detail TEXT,
+      confidence REAL DEFAULT 0.0,
+      detected_at TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
+      FOREIGN KEY (inspection_id) REFERENCES inspection_results(id),
+      FOREIGN KEY (order_id) REFERENCES orders(id)
+    );
+  `);
+
+  // Index เพื่อ query เร็วเวลาดึง defect points ของ order
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_defect_points_order ON defect_points(order_id);`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_defect_points_inspection ON defect_points(inspection_id);`);
+
+  // ลบ View เก่าก่อน เพื่อ recreate ใหม่ด้วย logic ที่นับ defect points
+  // ทำไม? → CREATE VIEW IF NOT EXISTS ไม่อัปเดต view ที่มีอยู่แล้ว
+  db.exec(`DROP VIEW IF EXISTS power_bi_inspection_summary;`);
+  db.exec(`DROP VIEW IF EXISTS daily_qa_summary;`);
+  db.exec(`DROP VIEW IF EXISTS pchart_data;`);
 
   // สร้าง View #1: ตารางแบน (Flat Table) สำหรับ Power BI
   //
@@ -106,10 +149,11 @@ function initDatabase() {
       ir.chain_count,
       ir.defect_type,
       ir.defect_detail,
+      ir.defect_count,
       ir.confidence,
       ir.image_path,
       o.status AS order_status,
-      CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END AS is_defect,
+      CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END AS is_defective_chain,
       o.total_chain_count,
       o.total_defect_count
     FROM inspection_results ir
@@ -134,9 +178,10 @@ function initDatabase() {
       o.chain_size,
       o.mode,
       COUNT(*) AS total_inspections,
-      SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
-      COUNT(*) - SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS pass_count,
-      ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
+      SUM(ir.defect_count) AS total_defect_points,
+      SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS defective_chains,
+      COUNT(*) - SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS pass_count,
+      ROUND(CAST(SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
       ROUND(AVG(ir.confidence) * 100, 2) AS avg_confidence_percent,
       SUM(ir.chain_count) AS total_chains_counted
     FROM inspection_results ir
@@ -158,8 +203,9 @@ function initDatabase() {
     SELECT 
       DATE(ir.timestamp) AS sample_date,
       COUNT(*) AS sample_size,
-      SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
-      ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*), 4) AS defect_proportion
+      SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS defect_count,
+      SUM(ir.defect_count) AS total_defect_points,
+      ROUND(CAST(SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*), 4) AS defect_proportion
     FROM inspection_results ir
     GROUP BY DATE(ir.timestamp)
     ORDER BY sample_date ASC;

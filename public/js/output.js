@@ -13,6 +13,9 @@ const socket = io();
 // ทำไมต้องเก็บ? → เพราะต้องรู้ว่ากำลังโชว์ของ Order ไหน เพื่ออัปเดตข้อมูลให้ถูกตัว
 let currentOrderId = null;
 
+// เก็บ defect points ของ order ปัจจุบันไว้แสดงใน Timeline panel
+let defectPointsBuffer = [];
+
 // เมื่อเชื่อมต่อ Server ได้ → สถานะกล้องเป็นสีเขียว "เชื่อมต่อแล้ว"
 socket.on('connect', () => {
   addLog('System', 'Connected to server');
@@ -69,18 +72,21 @@ async function onOrderSelect(orderId) {
     if (!data.order) return;
 
     currentOrderId = data.order.id;
-    updateOrderDisplay(data.order);
+    updateOrderDisplay(data.order, data.stats);
     if (data.inspection) {
-      updateInspectionDisplay(data.inspection, data.order);
+      updateInspectionDisplay(data.inspection, data.order, data.stats);
     } else {
       document.getElementById('defectType').textContent = 'No results yet';
       document.getElementById('confidence').textContent = '-';
       document.getElementById('detectedLink').textContent = '-';
       document.getElementById('defectDetail').textContent = '-';
       document.getElementById('lastUpdated').textContent = '-';
+      document.getElementById('chainDefectCount').textContent = '0';
       document.getElementById('aiImage').style.display = 'none';
       document.getElementById('aiImagePlaceholder').style.display = 'block';
     }
+    defectPointsBuffer = data.defect_points || [];
+    renderDefectTimeline(defectPointsBuffer);
     addLog('Select', `Switched to order #${orderId}`);
   } catch (err) {
     console.error('โหลดข้อมูลคำสั่งไม่สำเร็จ:', err);
@@ -118,32 +124,42 @@ socket.on('order_status_changed', (order) => {
 // นี่คือ Event สำคัญที่สุด!
 // Flow: YOLOv8 ส่ง JSON ไป POST /api/detect → Server เก็บ DB + emit มาที่นี่
 socket.on('detection_result', (data) => {
-  // Destructuring → ดึงข้อมูลออกจาก Object
-  // ทำไมใช้? → สั้นกว่าเขียน data.inspection / data.order ทุกครั้ง
-  const { inspection, order } = data;
+  const { inspection, order, defect_points, stats } = data;
 
   // เช็คว่าเป็น Order ที่แสดงอยู่ หรือยังไม่มี Order (รับทั้งหมด)
   if (order.id === currentOrderId || !currentOrderId) {
     currentOrderId = order.id;
-    updateOrderDisplay(order);
-    updateInspectionDisplay(inspection, order);
+    updateOrderDisplay(order, stats);
+    updateInspectionDisplay(inspection, order, stats);
 
-    // เพิ่มบันทึกใน Log
-    const logType = inspection.defect_type === 'none' ? 'Pass' : 'Defect';
-    addLog(logType, `Count: ${inspection.chain_count} | Type: ${getDefectLabel(inspection.defect_type)} | Confidence: ${(inspection.confidence * 100).toFixed(1)}%`);
+    // เพิ่ม defect points จุดใหม่เข้า Timeline (ใส่ด้านบน)
+    if (Array.isArray(defect_points) && defect_points.length > 0) {
+      defectPointsBuffer = [...defect_points, ...defectPointsBuffer].slice(0, 50);
+      renderDefectTimeline(defectPointsBuffer);
+
+      // log แต่ละจุด defect
+      defect_points.forEach(p => {
+        addLog('Defect', `Link #${p.link_number ?? '?'} | ${getDefectLabel(p.defect_type)} | ${(p.confidence * 100).toFixed(1)}% | ${p.detected_at}`);
+      });
+    } else {
+      const logType = (inspection.defect_count || 0) > 0 ? 'Defect' : 'Pass';
+      addLog(logType, `Count: ${inspection.chain_count} | ${inspection.defect_count || 0} defect points | Confidence: ${(inspection.confidence * 100).toFixed(1)}%`);
+    }
   }
 });
 
 // อัปเดตพาเนลข้อมูลคำสั่งปัจจุบัน
 // เปิดพาเนลที่ซ่อนไว้ (display:none) และเติมข้อมูลทุกช่อง
-function updateOrderDisplay(order) {
+function updateOrderDisplay(order, stats) {
   setFirstUseState(false);
   document.getElementById('orderId').textContent = '#' + order.id;
   document.getElementById('orderMode').textContent = getModeLabel(order.mode);
   document.getElementById('orderSize').textContent = order.chain_size;
   document.getElementById('orderColor').textContent = getColorLabel(order.chain_color);
   document.getElementById('orderAttribution').textContent = order.product_attribution || '-';
-  document.getElementById('orderDefects').textContent = order.total_defect_count;
+  document.getElementById('orderDefects').textContent = stats ? stats.total_defect_points : order.total_defect_count;
+  const dcEl = document.getElementById('orderDefectiveChains');
+  if (dcEl) dcEl.textContent = stats ? stats.defective_chains : 0;
   document.getElementById('chainCount').textContent = order.total_chain_count;
   updateSystemStatus(order.status);
 }
@@ -151,19 +167,21 @@ function updateOrderDisplay(order) {
 // อัปเดตส่วน "ผลการตรวจจับจาก AI" ทั้งหมด
 // ใส่: สถานะตรวจจับ, ประเภทตำหนิ, ความมั่นใจ, รูปภาพ, เวลา
 // ถ้ามีรูป → โชว์รูป / ถ้าไม่มี → โชว์ placeholder
-function updateInspectionDisplay(inspection, order) {
+function updateInspectionDisplay(inspection, order, stats) {
   document.getElementById('chainCount').textContent = order.total_chain_count;
 
   const detStatus = document.getElementById('detectionStatus');
-  if (inspection.defect_type === 'none') {
+  const dCount = inspection.defect_count || 0;
+  if (dCount === 0) {
     detStatus.textContent = 'No Defect';
     detStatus.className = 'value green';
   } else {
-    detStatus.textContent = 'Defect Found!';
+    detStatus.textContent = `${dCount} Defect Point${dCount > 1 ? 's' : ''} Found!`;
     detStatus.className = 'value red';
   }
 
-  document.getElementById('defectType').textContent = inspection.defect_type === 'none' ? 'Normal' : getDefectLabel(inspection.defect_type);
+  document.getElementById('defectType').textContent = dCount === 0 ? 'Normal' : getDefectLabel(inspection.defect_type);
+  document.getElementById('chainDefectCount').textContent = dCount;
   document.getElementById('confidence').textContent = (inspection.confidence * 100).toFixed(1) + '%';
   document.getElementById('detectedLink').textContent = inspection.chain_count > 0 ? inspection.chain_count + ' links' : '-';
   document.getElementById('defectDetail').textContent = inspection.defect_detail || '-';
@@ -179,7 +197,33 @@ function updateInspectionDisplay(inspection, order) {
     document.getElementById('aiImagePlaceholder').style.display = 'block';
   }
 
-  document.getElementById('orderDefects').textContent = order.total_defect_count;
+  if (stats) {
+    document.getElementById('orderDefects').textContent = stats.total_defect_points;
+    const dcEl = document.getElementById('orderDefectiveChains');
+    if (dcEl) dcEl.textContent = stats.defective_chains;
+  } else {
+    document.getElementById('orderDefects').textContent = order.total_defect_count;
+  }
+}
+
+// แสดง Timeline ของ defect points (เวลา + ข้อที่ + ประเภท)
+function renderDefectTimeline(points) {
+  const tbody = document.getElementById('defectTimelineBody');
+  if (!tbody) return;
+  if (!points || points.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#aaa; padding:20px;">No defect points detected yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = points.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${p.detected_at}</td>
+      <td><strong>${p.link_number != null ? '#' + p.link_number : '-'}</strong></td>
+      <td><span class="badge badge-defect">${getDefectLabel(p.defect_type)}</span></td>
+      <td>${p.defect_detail || '-'}</td>
+      <td>${p.confidence != null ? (p.confidence * 100).toFixed(1) + '%' : '-'}</td>
+    </tr>
+  `).join('');
 }
 
 // อัปเดตสถานะระบบบนการ์ดสถานะ
@@ -264,11 +308,14 @@ async function loadCurrentOutput() {
     }
 
     currentOrderId = data.order.id;
-    updateOrderDisplay(data.order);
+    updateOrderDisplay(data.order, data.stats);
 
     if (data.inspection) {
-      updateInspectionDisplay(data.inspection, data.order);
+      updateInspectionDisplay(data.inspection, data.order, data.stats);
     }
+
+    defectPointsBuffer = data.defect_points || [];
+    renderDefectTimeline(defectPointsBuffer);
   } catch (err) {
     console.error('โหลดข้อมูลหน้าควบคุมไม่สำเร็จ:', err);
   }
@@ -317,7 +364,8 @@ function getDefectLabel(defectType) {
     'scratch': 'Scratch',
     'crack': 'Crack',
     'rust': 'Rust',
-    'deformation': 'Deformation'
+    'deformation': 'Deformation',
+    'mixed': 'Mixed Defects'
   };
   return labels[defectType] || defectType;
 }
@@ -353,19 +401,38 @@ async function simulateDetection() {
     return;
   }
 
-  const scenarios = [
-    { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
-    { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
-    { defect_type: 'none', defect_detail: '', image_path: '/images/demo_pass.svg' },
-    { defect_type: 'scratch', defect_detail: 'Surface scratch on chain link', image_path: '/images/demo_detect_001.svg' },
-    { defect_type: 'crack', defect_detail: 'Small crack near joint area', image_path: '/images/demo_crack.svg' },
-    { defect_type: 'rust', defect_detail: 'Rust on chain surface', image_path: '/images/demo_rust.svg' },
-    { defect_type: 'deformation', defect_detail: 'Deformed chain link', image_path: '/images/demo_detect_001.svg' },
-  ];
-
-  const pick = scenarios[Math.floor(Math.random() * scenarios.length)];
+  const defectTypes = ['scratch', 'crack', 'rust', 'deformation'];
   const chainCount = Math.floor(Math.random() * 20) + 5;
-  const confidence = (Math.random() * 0.25 + 0.75).toFixed(3);
+
+  // 30% โอกาสเส้นปกติ (ไม่มี defect)
+  // 70% โอกาสมี defect 1-3 จุดในเส้นเดียว
+  const isPass = Math.random() < 0.3;
+  const defects = [];
+  let imagePath = '/images/demo_pass.svg';
+
+  if (!isPass) {
+    const numPoints = Math.floor(Math.random() * 3) + 1; // 1-3 จุด
+    const usedLinks = new Set();
+    for (let i = 0; i < numPoints; i++) {
+      let link;
+      do { link = Math.floor(Math.random() * chainCount) + 1; } while (usedLinks.has(link));
+      usedLinks.add(link);
+      const type = defectTypes[Math.floor(Math.random() * defectTypes.length)];
+      defects.push({
+        link_number: link,
+        defect_type: type,
+        defect_detail: `${type} detected at link #${link}`,
+        confidence: parseFloat((Math.random() * 0.25 + 0.75).toFixed(3))
+      });
+    }
+    const imgMap = {
+      scratch: '/images/demo_detect_001.svg',
+      crack: '/images/demo_crack.svg',
+      rust: '/images/demo_rust.svg',
+      deformation: '/images/demo_detect_001.svg'
+    };
+    imagePath = imgMap[defects[0].defect_type];
+  }
 
   try {
     const res = await fetch('/api/detect', {
@@ -374,16 +441,17 @@ async function simulateDetection() {
       body: JSON.stringify({
         order_id: currentOrderId,
         chain_count: chainCount,
-        defect_type: pick.defect_type,
-        defect_detail: pick.defect_detail,
-        confidence: parseFloat(confidence),
-        image_path: pick.image_path
+        defects,
+        image_path: imagePath
       })
     });
 
     const data = await res.json();
     if (data.success) {
-      showToast(`AI Simulation: ${pick.defect_type === 'none' ? 'Pass ✓' : getDefectLabel(pick.defect_type) + ' ✗'}`, pick.defect_type === 'none' ? 'success' : 'error');
+      const msg = defects.length === 0
+        ? 'AI Simulation: Pass ✓'
+        : `AI Simulation: ${defects.length} defect point${defects.length > 1 ? 's' : ''} ✗`;
+      showToast(msg, defects.length === 0 ? 'success' : 'error');
     }
   } catch (err) {
     showToast('AI Simulation failed', 'error');

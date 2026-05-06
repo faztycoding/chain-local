@@ -101,8 +101,8 @@
           <div class="value" id="countInspections">0</div>
         </div>
         <div class="db-stat-card">
-          <div class="label">Database File</div>
-          <div class="value" style="font-size:14px;">chain_data.db</div>
+          <div class="label">Total Defect Points</div>
+          <div class="value" id="countDefectPoints" style="color:#e74c3c;">0</div>
         </div>
         <div class="db-stat-card">
           <div class="label">Last Refreshed</div>
@@ -114,6 +114,7 @@
       <div class="db-toolbar">
         <button class="db-btn active" data-table="orders" onclick="switchTable('orders')">Orders Table</button>
         <button class="db-btn" data-table="inspections" onclick="switchTable('inspections')">Inspection Results</button>
+        <button class="db-btn" data-table="defects" onclick="switchTable('defects')">Defect Points</button>
         <button class="db-btn" data-table="raw" onclick="switchTable('raw')">Raw JSON</button>
         <button class="db-btn" onclick="loadData()" style="margin-left:auto;">🔄 Refresh</button>
         <button class="db-btn" onclick="exportJSON()">⬇ Export JSON</button>
@@ -150,7 +151,7 @@
       <!-- Inspection Results Table -->
       <div class="db-section" id="section-inspections">
         <div class="panel">
-          <div class="panel-title">inspection_results (AI Detection Records)</div>
+          <div class="panel-title">inspection_results (AI Detection Records — one row per chain)</div>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
@@ -159,6 +160,7 @@
                   <th>Order ID</th>
                   <th>Chain Count</th>
                   <th>Defect Type</th>
+                  <th>Defect Points</th>
                   <th>Defect Detail</th>
                   <th>Confidence</th>
                   <th>Image Path</th>
@@ -166,6 +168,35 @@
                 </tr>
               </thead>
               <tbody id="inspectionsBody">
+                <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Defect Points Table -->
+      <div class="db-section" id="section-defects">
+        <div class="panel">
+          <div class="panel-title">defect_points (Individual defect points — one row per defect)</div>
+          <p style="margin:0 0 12px; font-size:13px; color:#667;">
+            Each row represents one defect point detected by AI, with exact link number and timestamp.
+          </p>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Order ID</th>
+                  <th>Inspection ID</th>
+                  <th>Link #</th>
+                  <th>Defect Type</th>
+                  <th>Detail</th>
+                  <th>Confidence</th>
+                  <th>Detected At</th>
+                </tr>
+              </thead>
+              <tbody id="defectPointsBody">
                 <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">Loading...</td></tr>
               </tbody>
             </table>

@@ -15,15 +15,19 @@ Content-Type: application/json
 
 ---
 
-## Request JSON Format
+## Request JSON Format (NEW — Multiple Defect Points Per Chain)
+
+> **Important:** As of v2, each POST = **one chain inspection**. A chain may have **multiple defect points**, sent as an array. The system tracks each defect point with its **link number** and **timestamp**.
 
 ```json
 {
   "order_id": 1,
-  "chain_count": 5,
-  "defect_type": "none",
-  "defect_detail": "",
-  "confidence": 0.95,
+  "chain_count": 12,
+  "defects": [
+    { "link_number": 3, "defect_type": "scratch",     "confidence": 0.92, "defect_detail": "scratch at link #3" },
+    { "link_number": 7, "defect_type": "rust",        "confidence": 0.88, "defect_detail": "rust spot" },
+    { "link_number": 9, "defect_type": "deformation", "confidence": 0.81, "defect_detail": "twisted link" }
+  ],
   "image_path": "/images/detection_001.jpg"
 }
 ```
@@ -32,48 +36,75 @@ Content-Type: application/json
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `order_id` | Integer | **Yes** | The order ID from the input page. Get this from `GET /api/orders` |
+| `order_id` | Integer | **Yes** | The order ID from input page. Get from `GET /api/orders` |
 | `chain_count` | Integer | No | Number of chain links detected in this frame (default: 0) |
-| `defect_type` | String | No | Type of defect detected. Use `"none"` for normal chain. Examples: `"scratch"`, `"crack"`, `"rust"`, `"deformation"`, `"none"` |
-| `defect_detail` | String | No | Additional detail about the defect (e.g., location, severity) |
-| `confidence` | Float | No | Detection confidence score from 0.0 to 1.0 (e.g., 0.95 = 95%) |
-| `image_path` | String | No | Path to the detection image with bounding boxes (optional) |
+| `defects` | Array | No | List of defect points found in this chain. Empty array `[]` = pass |
+| `defects[].link_number` | Integer | No | Which chain link the defect is at (1-based) |
+| `defects[].defect_type` | String | **Yes** (per defect) | `"scratch"`, `"crack"`, `"rust"`, `"deformation"` |
+| `defects[].defect_detail` | String | No | Additional info about this point |
+| `defects[].confidence` | Float | No | Confidence 0.0–1.0 |
+| `image_path` | String | No | Path to the detection image (optional) |
+
+### Backward-Compatible Format (Old AI Code Still Works)
+
+If your AI was built against the v1 spec, the old format is still accepted:
+```json
+{
+  "order_id": 1,
+  "chain_count": 5,
+  "defect_type": "scratch",
+  "defect_detail": "scratch on link #3",
+  "confidence": 0.92,
+  "image_path": ""
+}
+```
+The server will internally convert it to a single-element `defects` array.
 
 ---
 
 ## Example Requests
 
-### Normal Chain (No Defect)
+### Pass (No Defects)
 ```json
 {
   "order_id": 1,
-  "chain_count": 3,
-  "defect_type": "none",
-  "defect_detail": "",
-  "confidence": 0.92,
+  "chain_count": 12,
+  "defects": [],
   "image_path": ""
 }
 ```
 
-### Defect Found
+### Single Defect
 ```json
 {
   "order_id": 1,
-  "chain_count": 1,
-  "defect_type": "scratch",
-  "defect_detail": "Surface scratch on link #3, severity: medium",
-  "confidence": 0.87,
-  "image_path": "/images/defect_frame_042.jpg"
+  "chain_count": 12,
+  "defects": [
+    { "link_number": 5, "defect_type": "scratch", "confidence": 0.91 }
+  ]
 }
 ```
 
-### Counting Only
+### Multiple Defects on One Chain
+```json
+{
+  "order_id": 1,
+  "chain_count": 15,
+  "defects": [
+    { "link_number": 2,  "defect_type": "rust",     "confidence": 0.85 },
+    { "link_number": 8,  "defect_type": "crack",    "confidence": 0.93 },
+    { "link_number": 14, "defect_type": "scratch",  "confidence": 0.78 }
+  ],
+  "image_path": "/images/multi_defect.jpg"
+}
+```
+
+### Counting Only (No Defect Detection)
 ```json
 {
   "order_id": 1,
   "chain_count": 10,
-  "defect_type": "none",
-  "confidence": 0.98
+  "defects": []
 }
 ```
 
@@ -88,11 +119,12 @@ Content-Type: application/json
   "inspection": {
     "id": 1,
     "order_id": 1,
-    "timestamp": "2025-04-07 10:30:15",
-    "chain_count": 3,
-    "defect_type": "none",
-    "defect_detail": "",
-    "confidence": 0.92,
+    "timestamp": "2026-05-06 19:30:15",
+    "chain_count": 12,
+    "defect_type": "mixed",
+    "defect_detail": "link#3:scratch, link#7:rust, link#9:deformation",
+    "defect_count": 3,
+    "confidence": 0.87,
     "image_path": ""
   },
   "order": {
@@ -100,9 +132,19 @@ Content-Type: application/json
     "mode": "both",
     "chain_size": "10mm",
     "chain_color": "silver",
-    "total_chain_count": 15,
-    "total_defect_count": 0,
+    "total_chain_count": 12,
+    "total_defect_count": 3,
     "status": "running"
+  },
+  "defect_points": [
+    { "id": 1, "inspection_id": 1, "order_id": 1, "link_number": 3, "defect_type": "scratch", "confidence": 0.92, "detected_at": "2026-05-06 19:30:15" },
+    { "id": 2, "inspection_id": 1, "order_id": 1, "link_number": 7, "defect_type": "rust", "confidence": 0.88, "detected_at": "2026-05-06 19:30:15" },
+    { "id": 3, "inspection_id": 1, "order_id": 1, "link_number": 9, "defect_type": "deformation", "confidence": 0.81, "detected_at": "2026-05-06 19:30:15" }
+  ],
+  "stats": {
+    "total_inspections": 1,
+    "defective_chains": 1,
+    "total_defect_points": 3
   }
 }
 ```
@@ -131,33 +173,59 @@ Content-Type: application/json
 
 ```python
 import requests
-import json
 
 API_URL = "http://localhost:3000/api/detect"
 
-# After YOLOv8 processes a frame:
-def send_detection(order_id, count, defect, confidence, detail="", img_path=""):
+# After YOLOv8 finishes one chain frame, build a list of defect points:
+#   each detection box from YOLO becomes one item in `defects[]`
+def send_chain_inspection(order_id, chain_count, yolo_detections, image_path=""):
+    """
+    Send one chain inspection with all defect points found in that chain.
+
+    Parameters:
+        order_id (int): The order ID from /api/orders
+        chain_count (int): Total links in the chain frame
+        yolo_detections (list): List of detection dicts from YOLOv8, e.g.:
+            [
+                {"link_number": 3, "defect_type": "scratch", "confidence": 0.92},
+                {"link_number": 7, "defect_type": "rust",    "confidence": 0.88},
+            ]
+            Empty list = pass (no defects).
+        image_path (str): Optional path to annotated image
+    """
     payload = {
         "order_id": order_id,
-        "chain_count": count,
-        "defect_type": defect,       # "none", "scratch", "crack", "rust", etc.
-        "defect_detail": detail,
-        "confidence": confidence,     # 0.0 - 1.0
-        "image_path": img_path
+        "chain_count": chain_count,
+        "defects": yolo_detections,
+        "image_path": image_path
     }
-    
+
     try:
         response = requests.post(API_URL, json=payload)
         result = response.json()
-        print(f"Sent: count={count}, defect={defect}, conf={confidence}")
+        print(f"Sent {len(yolo_detections)} defect points for chain with {chain_count} links")
         return result
     except Exception as e:
         print(f"Error sending detection: {e}")
         return None
 
-# Usage example:
-# send_detection(order_id=1, count=5, defect="none", confidence=0.95)
-# send_detection(order_id=1, count=1, defect="scratch", confidence=0.87, detail="Link #3")
+
+# --- Usage examples ---
+
+# 1) Pass (no defects)
+send_chain_inspection(order_id=1, chain_count=12, yolo_detections=[])
+
+# 2) Single defect on link #5
+send_chain_inspection(order_id=1, chain_count=12, yolo_detections=[
+    {"link_number": 5, "defect_type": "scratch", "confidence": 0.91}
+])
+
+# 3) Multiple defects on the same chain
+send_chain_inspection(order_id=1, chain_count=15, yolo_detections=[
+    {"link_number": 2,  "defect_type": "rust",    "confidence": 0.85},
+    {"link_number": 8,  "defect_type": "crack",   "confidence": 0.93},
+    {"link_number": 14, "defect_type": "scratch", "confidence": 0.78},
+], image_path="/images/multi_defect.jpg")
 ```
 
 ---

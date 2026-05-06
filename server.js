@@ -67,6 +67,23 @@ function getLatestInspectionForOrder(orderId) {
   `).get(orderId) || null;
 }
 
+// คำนวณสถิติสรุปของ order (จำนวนเส้น, จุด defect, เส้นที่ defect)
+// ใช้ตอนไหน? → ตอบกลับใน /api/output/* เพื่อให้หน้า Output แสดง 2 ตัวเลข:
+//   - total_defect_points = ผลรวมจุด defect ทั้งหมด
+//   - defective_chains    = จำนวนเส้นที่มี defect อย่างน้อย 1 จุด
+function getOrderStats(orderId) {
+  if (!orderId) return { total_inspections: 0, defective_chains: 0, total_defect_points: 0 };
+  const row = db.prepare(`
+    SELECT
+      COUNT(*) AS total_inspections,
+      COALESCE(SUM(CASE WHEN defect_count > 0 THEN 1 ELSE 0 END), 0) AS defective_chains,
+      COALESCE(SUM(defect_count), 0) AS total_defect_points
+    FROM inspection_results
+    WHERE order_id = ?
+  `).get(orderId);
+  return row || { total_inspections: 0, defective_chains: 0, total_defect_points: 0 };
+}
+
 // Middleware → ตัวกลางที่ทำงานก่อน Request จะถึง Route
 // ทำไมต้องมี? เพราะ Express ต้องรู้วิธีอ่านข้อมูลก่อนจัดการ
 // cors()           → ให้ AI (Python) หรือโปรแกรมอื่นเรียก API ได้
@@ -182,59 +199,121 @@ app.patch('/api/orders/:id/status', (req, res) => {
 // ทำไมใช้ POST? → เพราะ AI "สร้าง" ข้อมูลใหม่ทุกครั้งที่ตรวจจับ
 app.post('/api/detect', (req, res) => {
   try {
-    const { order_id, chain_count, defect_type, defect_detail, confidence, image_path } = req.body;
+    const {
+      order_id,
+      chain_count,
+      defect_type,           // backward-compat (เลิกใช้แล้ว ใช้ defects[] แทน)
+      defect_detail,         // backward-compat
+      defects,               // ✨ ใหม่: array ของจุดตำหนิ [{link_number, defect_type, confidence, defect_detail}]
+      confidence,
+      image_path
+    } = req.body;
 
     if (!order_id) {
       return res.status(400).json({ error: 'order_id is required' });
     }
 
-    // ตรวจสอบว่า Order มีอยู่จริงไหม → ป้องกัน AI ส่งมาผิด order_id
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id);
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // บันทึกผลตรวจจับลง DB
-    // ทำไมต้องเก็บ? → เพื่อนำไปทำกราฟ/รายงาน/p-chart ภายหลัง
-    // ใช้ ? (Parameterized Query) ป้องกัน SQL Injection
-    const stmt = db.prepare(`
-      INSERT INTO inspection_results (order_id, chain_count, defect_type, defect_detail, confidence, image_path)
+    // รวม defects จาก 2 รูปแบบ (รองรับทั้งของเก่าและของใหม่):
+    //   1) แบบใหม่: defects: [{link_number, defect_type, confidence, defect_detail}]
+    //   2) แบบเก่า: defect_type: "scratch" → แปลงเป็น array 1 ตัว (ถ้าไม่ใช่ none)
+    let defectList = [];
+    if (Array.isArray(defects) && defects.length > 0) {
+      defectList = defects.filter(d => d && d.defect_type && d.defect_type !== 'none');
+    } else if (defect_type && defect_type !== 'none') {
+      defectList = [{
+        defect_type,
+        defect_detail: defect_detail || '',
+        confidence: confidence || 0.0,
+        link_number: null
+      }];
+    }
+
+    const defectCount = defectList.length;
+    // สรุปประเภท defect รวม (เพื่อให้ inspection_results ยังมี field defect_type)
+    // ถ้ามีหลายประเภทผสมกัน → ใช้ "mixed"
+    let summaryType = 'none';
+    if (defectCount === 1) summaryType = defectList[0].defect_type;
+    else if (defectCount > 1) {
+      const types = [...new Set(defectList.map(d => d.defect_type))];
+      summaryType = types.length === 1 ? types[0] : 'mixed';
+    }
+    const summaryDetail = defect_detail
+      || defectList.map(d => `link#${d.link_number ?? '?'}:${d.defect_type}`).join(', ');
+    const avgConfidence = defectList.length > 0
+      ? defectList.reduce((s, d) => s + (d.confidence || 0), 0) / defectList.length
+      : (confidence || 0.0);
+
+    // ใช้ Transaction เพื่อให้แน่ใจว่าทั้ง inspection + defect_points บันทึกพร้อมกัน
+    // ถ้ามี error กลางคัน → rollback ทั้งหมด ไม่ทิ้งข้อมูลค้าง
+    const insertInspection = db.prepare(`
+      INSERT INTO inspection_results
+        (order_id, chain_count, defect_type, defect_detail, defect_count, confidence, image_path)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertDefectPoint = db.prepare(`
+      INSERT INTO defect_points
+        (inspection_id, order_id, link_number, defect_type, defect_detail, confidence)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(
-      order_id,
-      chain_count || 0,
-      defect_type || 'none',
-      defect_detail || '',
-      confidence || 0.0,
-      image_path || ''
-    );
-
-    // อัปเดตยอดรวมในคำสั่ง (จำนวนโซ่สะสม + จำนวนตำหนิสะสม)
-    // ทำไมต้องอัปเดต? → เพื่อให้หน้า Output เห็นตัวเลขรวมได้เลยไม่ต้องนับใหม่
-    // CASE WHEN คือ if-else ใน SQL → ถ้าเป็นตำหนิ +1 ถ้าไม่ใช่ +0
     const updateOrder = db.prepare(`
-      UPDATE orders 
+      UPDATE orders
       SET total_chain_count = total_chain_count + ?,
-          total_defect_count = total_defect_count + CASE WHEN ? != 'none' THEN 1 ELSE 0 END,
+          total_defect_count = total_defect_count + ?,
           updated_at = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
       WHERE id = ?
     `);
-    updateOrder.run(chain_count || 0, defect_type || 'none', order_id);
 
-    const inspection = db.prepare('SELECT * FROM inspection_results WHERE id = ?').get(result.lastInsertRowid);
-    const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id);
+    const runAll = db.transaction(() => {
+      const r = insertInspection.run(
+        order_id,
+        chain_count || 0,
+        summaryType,
+        summaryDetail,
+        defectCount,
+        avgConfidence,
+        image_path || ''
+      );
+      const inspectionId = r.lastInsertRowid;
 
-    // ส่งผลตรวจจับไปยังทุกหน้าเว็บแบบ Real-time
-    // ทำไมส่งทั้ง inspection + order? → เพราะหน้า Output ต้องการทั้ง:
-    //   1) ผลตรวจจับล่าสุด (inspection) เพื่อแสดงรายละเอียด
-    //   2) ข้อมูล Order ที่อัปเดตแล้ว (order) เพื่อแสดงยอดรวม
-    io.emit('detection_result', {
-      inspection,
-      order: updatedOrder
+      // บันทึกแต่ละจุด defect ลงตาราง defect_points
+      for (const d of defectList) {
+        insertDefectPoint.run(
+          inspectionId,
+          order_id,
+          d.link_number ?? null,
+          d.defect_type,
+          d.defect_detail || '',
+          d.confidence || 0.0
+        );
+      }
+
+      // total_defect_count ใน orders = ผลรวม "จุด defect" สะสม (ไม่ใช่จำนวนเส้น)
+      updateOrder.run(chain_count || 0, defectCount, order_id);
+      return inspectionId;
     });
 
-    res.status(201).json({ success: true, inspection, order: updatedOrder });
+    const inspectionId = runAll();
+
+    const inspection = db.prepare('SELECT * FROM inspection_results WHERE id = ?').get(inspectionId);
+    const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id);
+    const points = db.prepare('SELECT * FROM defect_points WHERE inspection_id = ? ORDER BY id').all(inspectionId);
+
+    const stats = getOrderStats(order_id);
+
+    // ส่งผลตรวจจับไปยังทุกหน้าเว็บแบบ Real-time
+    io.emit('detection_result', {
+      inspection,
+      order: updatedOrder,
+      defect_points: points,
+      stats
+    });
+
+    res.status(201).json({ success: true, inspection, order: updatedOrder, defect_points: points, stats });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -247,9 +326,10 @@ app.post('/api/detect', (req, res) => {
 app.post('/api/admin/reset', (req, res) => {
   try {
     db.exec(`
+      DELETE FROM defect_points;
       DELETE FROM inspection_results;
       DELETE FROM orders;
-      DELETE FROM sqlite_sequence WHERE name IN ('orders', 'inspection_results');
+      DELETE FROM sqlite_sequence WHERE name IN ('orders', 'inspection_results', 'defect_points');
     `);
 
     // แจ้งทุกหน้าเว็บว่าระบบถูก reset แล้ว → หน้าเว็บควรรีเฟรช
@@ -286,9 +366,10 @@ app.get('/api/stats/weekly', (req, res) => {
         MIN(DATE(ir.timestamp)) AS week_start_date,
         MAX(DATE(ir.timestamp)) AS week_end_date,
         COUNT(*) AS total_inspections,
-        SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
-        COUNT(*) - SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS pass_count,
-        ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
+        SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS defect_count,
+        SUM(ir.defect_count) AS total_defect_points,
+        COUNT(*) - SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS pass_count,
+        ROUND(CAST(SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
         ROUND(AVG(ir.confidence) * 100, 2) AS avg_confidence_percent,
         SUM(ir.chain_count) AS total_chains_counted
       FROM inspection_results ir
@@ -307,9 +388,10 @@ app.get('/api/stats/monthly', (req, res) => {
       SELECT
         strftime('%Y-%m', ir.timestamp) AS report_month,
         COUNT(*) AS total_inspections,
-        SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
-        COUNT(*) - SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS pass_count,
-        ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
+        SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS defect_count,
+        SUM(ir.defect_count) AS total_defect_points,
+        COUNT(*) - SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS pass_count,
+        ROUND(CAST(SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent,
         ROUND(AVG(ir.confidence) * 100, 2) AS avg_confidence_percent,
         SUM(ir.chain_count) AS total_chains_counted
       FROM inspection_results ir
@@ -354,8 +436,9 @@ app.get('/api/stats/defect-by-color', (req, res) => {
       SELECT 
         o.chain_color,
         COUNT(*) AS total_inspections,
-        SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS defect_count,
-        ROUND(CAST(SUM(CASE WHEN ir.defect_type != 'none' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent
+        SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS defect_count,
+        SUM(ir.defect_count) AS total_defect_points,
+        ROUND(CAST(SUM(CASE WHEN ir.defect_count > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100, 2) AS defect_rate_percent
       FROM inspection_results ir
       JOIN orders o ON ir.order_id = o.id
       GROUP BY o.chain_color
@@ -381,6 +464,45 @@ app.get('/api/stats/history', (req, res) => {
   }
 });
 
+// --- API สำหรับ Defect Points (จุดตำหนิแต่ละจุด) ---
+
+// ดึง defect points ทั้งหมด เรียงจากล่าสุด
+// ใช้ตอนไหน? → หน้า Database Viewer แสดงตาราง defect points
+//             และ Timeline บนหน้า Control Panel
+app.get('/api/defects', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 200;
+    const data = db.prepare(`
+      SELECT
+        dp.*,
+        o.mode,
+        o.chain_size,
+        o.chain_color
+      FROM defect_points dp
+      JOIN orders o ON dp.order_id = o.id
+      ORDER BY dp.detected_at DESC, dp.id DESC
+      LIMIT ?
+    `).all(limit);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ดึง defect points ของ order เดียว → ใช้ตอนเลือกดู order จาก dropdown
+app.get('/api/defects/order/:order_id', (req, res) => {
+  try {
+    const data = db.prepare(`
+      SELECT * FROM defect_points
+      WHERE order_id = ?
+      ORDER BY detected_at DESC, id DESC
+    `).all(req.params.order_id);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- API สำหรับหน้า Output ---
 
 // ดึง order ปัจจุบัน + ผลตรวจล่าสุด → ใช้ตอนเปิดหน้า Output หรือ refresh
@@ -390,7 +512,11 @@ app.get('/api/output/current', (req, res) => {
   try {
     const order = getCurrentOrder();
     const inspection = order ? getLatestInspectionForOrder(order.id) : null;
-    res.json({ order, inspection });
+    const stats = order ? getOrderStats(order.id) : null;
+    const defect_points = order
+      ? db.prepare(`SELECT * FROM defect_points WHERE order_id = ? ORDER BY detected_at DESC, id DESC LIMIT 50`).all(order.id)
+      : [];
+    res.json({ order, inspection, stats, defect_points });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -403,7 +529,11 @@ app.get('/api/output/:id', (req, res) => {
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found' });
     const inspection = getLatestInspectionForOrder(order.id);
-    res.json({ order, inspection });
+    const stats = getOrderStats(order.id);
+    const defect_points = db.prepare(`
+      SELECT * FROM defect_points WHERE order_id = ? ORDER BY detected_at DESC, id DESC LIMIT 50
+    `).all(order.id);
+    res.json({ order, inspection, stats, defect_points });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

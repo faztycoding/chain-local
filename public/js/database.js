@@ -14,6 +14,7 @@ const socket = io();
 
 let cachedOrders = [];
 let cachedInspections = [];
+let cachedDefectPoints = [];
 
 // สลับแท็บการดูข้อมูล (Orders / Inspections / Raw JSON)
 function switchTable(name) {
@@ -23,23 +24,28 @@ function switchTable(name) {
   document.querySelector(`.db-btn[data-table="${name}"]`).classList.add('active');
 }
 
-// โหลดข้อมูลจาก API ทั้งสอง endpoint พร้อมกัน
+// โหลดข้อมูลจาก API ทั้งสาม endpoint พร้อมกัน
 async function loadData() {
   try {
-    const [ordersRes, inspectionsRes] = await Promise.all([
+    const [ordersRes, inspectionsRes, defectsRes] = await Promise.all([
       fetch('/api/orders').then(r => r.json()),
-      fetch('/api/stats/history?limit=1000').then(r => r.json())
+      fetch('/api/stats/history?limit=1000').then(r => r.json()),
+      fetch('/api/defects?limit=1000').then(r => r.json())
     ]);
 
     cachedOrders = ordersRes || [];
     cachedInspections = inspectionsRes || [];
+    cachedDefectPoints = defectsRes || [];
 
     renderOrders(cachedOrders);
     renderInspections(cachedInspections);
+    renderDefectPoints(cachedDefectPoints);
     renderRawJson();
 
     document.getElementById('countOrders').textContent = cachedOrders.length;
     document.getElementById('countInspections').textContent = cachedInspections.length;
+    const dpEl = document.getElementById('countDefectPoints');
+    if (dpEl) dpEl.textContent = cachedDefectPoints.length;
     document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString();
   } catch (err) {
     console.error('Failed to load database:', err);
@@ -62,7 +68,7 @@ function renderOrders(data) {
       <td>${o.chain_color}</td>
       <td>${o.product_attribution || '-'}</td>
       <td>${o.total_chain_count}</td>
-      <td>${o.total_defect_count}</td>
+      <td><strong style="color:#e74c3c;">${o.total_defect_count}</strong></td>
       <td><span class="badge ${statusBadgeClass(o.status)}">${o.status}</span></td>
       <td>${o.created_at}</td>
       <td>${o.updated_at}</td>
@@ -74,7 +80,7 @@ function renderOrders(data) {
 function renderInspections(data) {
   const tbody = document.getElementById('inspectionsBody');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">No data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">No data</td></tr>';
     return;
   }
   tbody.innerHTML = data.map(r => `
@@ -83,10 +89,33 @@ function renderInspections(data) {
       <td>#${r.order_id}</td>
       <td>${r.chain_count}</td>
       <td><span class="badge ${r.defect_type === 'none' ? 'badge-pass' : 'badge-defect'}">${r.defect_type}</span></td>
+      <td><strong style="color:#e74c3c;">${r.defect_count ?? 0}</strong></td>
       <td>${r.defect_detail || '-'}</td>
       <td>${r.confidence != null ? (r.confidence * 100).toFixed(1) + '%' : '-'}</td>
       <td style="font-size:11px; color:#667;">${r.image_path || '-'}</td>
       <td>${r.timestamp}</td>
+    </tr>
+  `).join('');
+}
+
+// แสดงข้อมูลในตาราง defect_points (จุดตำหนิต่อจุด)
+function renderDefectPoints(data) {
+  const tbody = document.getElementById('defectPointsBody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">No defect points yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td>#${p.id}</td>
+      <td>#${p.order_id}</td>
+      <td>#${p.inspection_id}</td>
+      <td><strong>${p.link_number != null ? '#' + p.link_number : '-'}</strong></td>
+      <td><span class="badge badge-defect">${p.defect_type}</span></td>
+      <td>${p.defect_detail || '-'}</td>
+      <td>${p.confidence != null ? (p.confidence * 100).toFixed(1) + '%' : '-'}</td>
+      <td>${p.detected_at}</td>
     </tr>
   `).join('');
 }
@@ -96,9 +125,11 @@ function renderRawJson() {
   const payload = {
     orders: cachedOrders,
     inspection_results: cachedInspections,
+    defect_points: cachedDefectPoints,
     meta: {
       total_orders: cachedOrders.length,
       total_inspections: cachedInspections.length,
+      total_defect_points: cachedDefectPoints.length,
       exported_at: new Date().toISOString()
     }
   };
@@ -117,10 +148,12 @@ function exportJSON() {
   const payload = {
     orders: cachedOrders,
     inspection_results: cachedInspections,
+    defect_points: cachedDefectPoints,
     meta: {
       exported_at: new Date().toISOString(),
       total_orders: cachedOrders.length,
-      total_inspections: cachedInspections.length
+      total_inspections: cachedInspections.length,
+      total_defect_points: cachedDefectPoints.length
     }
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });

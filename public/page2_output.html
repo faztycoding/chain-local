@@ -104,16 +104,21 @@
                 <div class="value" id="orderAttribution">-</div>
               </div>
               <div class="order-info-item">
-                <div class="label">Defective Inspections</div>
+                <div class="label">Total Defect Points</div>
                 <div class="value" id="orderDefects" style="color:#e74c3c;">0</div>
-                <div style="font-size:11px; color:#888; margin-top:2px;">Per inspection (not per defect point)</div>
+                <div style="font-size:11px; color:#888; margin-top:2px;">Sum of all defect points detected</div>
+              </div>
+              <div class="order-info-item">
+                <div class="label">Defective Chains</div>
+                <div class="value" id="orderDefectiveChains" style="color:#e67e22;">0</div>
+                <div style="font-size:11px; color:#888; margin-top:2px;">Chains with at least 1 defect</div>
               </div>
             </div>
           </div>
 
           <!-- ผลการตรวจจับจาก AI -->
           <div class="panel">
-            <div class="panel-title">AI Detection Results</div>
+            <div class="panel-title">AI Detection Results (Latest Chain)</div>
             <div class="ai-result">
               <div class="ai-image-box" id="aiImageBox" style="position:relative;">
                 <span id="aiImagePlaceholder">Real-time video feed — Waiting for camera connection</span>
@@ -121,11 +126,37 @@
               </div>
               <div class="ai-info">
                 <div class="info-row"><strong>Defect Type:</strong> <span id="defectType">No results yet</span></div>
-                <div class="info-row"><strong>Confidence:</strong> <span id="confidence">-</span></div>
+                <div class="info-row"><strong>Defect Points in Chain:</strong> <span id="chainDefectCount" style="color:#e74c3c; font-weight:bold;">0</span></div>
+                <div class="info-row"><strong>Avg. Confidence:</strong> <span id="confidence">-</span></div>
                 <div class="info-row"><strong>Chain Links Detected:</strong> <span id="detectedLink">-</span></div>
                 <div class="info-row"><strong>Defect Details:</strong> <span id="defectDetail">Waiting for AI data</span></div>
                 <div class="info-row"><strong>Last Updated:</strong> <span id="lastUpdated">No inspection yet</span></div>
               </div>
+            </div>
+          </div>
+
+          <!-- Timeline ของจุดตำหนิ (per-point) -->
+          <div class="panel">
+            <div class="panel-title">Defect Points Timeline</div>
+            <p style="margin:0 0 12px; font-size:13px; color:#667;">
+              Each row is one defect point detected by AI — showing exact time and chain link number.
+            </p>
+            <div class="table-scroll">
+              <table class="data-table" id="defectTimelineTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Detected At</th>
+                    <th>Link #</th>
+                    <th>Defect Type</th>
+                    <th>Detail</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody id="defectTimelineBody">
+                  <tr><td colspan="6" style="text-align:center; color:#aaa; padding:20px;">No defect points detected yet</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
 

@@ -10,7 +10,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   background: radial-gradient(circle at top right, rgba(114, 147, 255, 0.16), transparent 24%), linear-gradient(180deg, #eef3ff 0%, #f7f9fc 42%, #eef2f7 100%);
   color: #243047;
   font-size: 14px;

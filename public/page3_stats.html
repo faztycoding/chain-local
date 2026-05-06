@@ -52,9 +52,14 @@
             <div class="desc">Total Inspections</div>
           </div>
           <div class="summary-card">
-            <div class="number" id="totalDefects" style="color:#e74c3c;">0</div>
-            <div class="desc">Defective Inspections</div>
-            <div style="font-size:11px; color:#aaa; margin-top:2px;">Per inspection (not per defect point)</div>
+            <div class="number" id="totalDefectPoints" style="color:#e74c3c;">0</div>
+            <div class="desc">Total Defect Points</div>
+            <div style="font-size:11px; color:#aaa; margin-top:2px;">Sum of every defect point (per point)</div>
+          </div>
+          <div class="summary-card">
+            <div class="number" id="totalDefects" style="color:#e67e22;">0</div>
+            <div class="desc">Defective Chains</div>
+            <div style="font-size:11px; color:#aaa; margin-top:2px;">Chains with at least 1 defect</div>
           </div>
           <div class="summary-card">
             <div class="number" id="defectRate">0%</div>
@@ -162,14 +167,15 @@
                   <th>Mode</th>
                   <th>Total Inspected</th>
                   <th>Pass</th>
-                  <th>Defect</th>
+                  <th>Defective Chains</th>
+                  <th>Defect Points</th>
                   <th>Defect Rate (%)</th>
                   <th>Avg. Confidence (%)</th>
                   <th>Chains Counted</th>
                 </tr>
               </thead>
               <tbody id="dailyTable">
-                <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
+                <tr><td colspan="11" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -187,14 +193,15 @@
                   <th>Date Range</th>
                   <th>Total Inspected</th>
                   <th>Pass</th>
-                  <th>Defect</th>
+                  <th>Defective Chains</th>
+                  <th>Defect Points</th>
                   <th>Defect Rate (%)</th>
                   <th>Avg. Confidence (%)</th>
                   <th>Chains Counted</th>
                 </tr>
               </thead>
               <tbody id="weeklyTable">
-                <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
+                <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -211,14 +218,15 @@
                   <th>Month</th>
                   <th>Total Inspected</th>
                   <th>Pass</th>
-                  <th>Defect</th>
+                  <th>Defective Chains</th>
+                  <th>Defect Points</th>
                   <th>Defect Rate (%)</th>
                   <th>Avg. Confidence (%)</th>
                   <th>Chains Counted</th>
                 </tr>
               </thead>
               <tbody id="monthlyTable">
-                <tr><td colspan="7" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
+                <tr><td colspan="8" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>
@@ -240,12 +248,13 @@
                   <th>Size</th>
                   <th>Links</th>
                   <th>Defect Type</th>
+                  <th>Defect Points</th>
                   <th>Confidence</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody id="historyTable">
-                <tr><td colspan="9" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
+                <tr><td colspan="10" style="text-align:center; color:#aaa; padding:20px;">No data available</td></tr>
               </tbody>
             </table>
           </div>

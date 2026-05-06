@@ -79,7 +79,8 @@ function getDefectLabel(defectType) {
     'scratch': 'Scratch',
     'crack': 'Crack',
     'rust': 'Rust',
-    'deformation': 'Deformation'
+    'deformation': 'Deformation',
+    'mixed': 'Mixed Defects'
   };
   return labels[defectType] || defectType;
 }
@@ -117,13 +118,18 @@ async function loadOverview() {
     // .reduce() → รวมค่าทั้งหมดเป็นตัวเดียว
     // .toFixed(1) → ปัดทศนิยม 1 ตำแหน่ง
     const totalInspections = exportData.length;
-    const totalDefects = exportData.filter(d => d.is_defect === 1).length;
-    const defectRate = totalInspections > 0 ? ((totalDefects / totalInspections) * 100).toFixed(1) : 0;
+    // เส้นที่มี defect อย่างน้อย 1 จุด (defective chains)
+    const defectiveChains = exportData.filter(d => (d.defect_count || 0) > 0).length;
+    // ผลรวมจุด defect ทั้งหมด (Total Defect Points)
+    const totalDefectPoints = exportData.reduce((s, d) => s + (d.defect_count || 0), 0);
+    const defectRate = totalInspections > 0 ? ((defectiveChains / totalInspections) * 100).toFixed(1) : 0;
     const avgConf = totalInspections > 0 ? (exportData.reduce((sum, d) => sum + d.confidence, 0) / totalInspections * 100).toFixed(1) : 0;
 
     document.getElementById('totalOrders').textContent = orders.length;
     document.getElementById('totalInspections').textContent = totalInspections;
-    document.getElementById('totalDefects').textContent = totalDefects;
+    document.getElementById('totalDefects').textContent = defectiveChains;
+    const dpEl = document.getElementById('totalDefectPoints');
+    if (dpEl) dpEl.textContent = totalDefectPoints;
     document.getElementById('defectRate').textContent = defectRate + '%';
     document.getElementById('avgConfidence').textContent = avgConf + '%';
 
@@ -142,7 +148,7 @@ async function loadOverview() {
 
     // วาดกราฟ: สัดส่วนตำหนิ vs ผ่าน (กราฟโดนัท)
     if (totalInspections > 0) {
-      renderDefectRatio(totalDefects, totalInspections - totalDefects);
+      renderDefectRatio(defectiveChains, totalInspections - defectiveChains);
     }
 
   } catch (err) {
@@ -195,9 +201,10 @@ function renderDailyCount(data) {
   // ใช้ Object เป็น Map? → เขียนง่ายกว่า Map จริง
   const dateMap = {};
   data.forEach(d => {
-    if (!dateMap[d.report_date]) dateMap[d.report_date] = { total: 0, defect: 0 };
+    if (!dateMap[d.report_date]) dateMap[d.report_date] = { total: 0, defect: 0, points: 0 };
     dateMap[d.report_date].total += d.total_inspections;
-    dateMap[d.report_date].defect += d.defect_count;
+    dateMap[d.report_date].defect += (d.defective_chains ?? d.defect_count);
+    dateMap[d.report_date].points += (d.total_defect_points ?? 0);
   });
 
   const dates = Object.keys(dateMap).sort();
@@ -216,8 +223,16 @@ function renderDailyCount(data) {
           tension: 0.3
         },
         {
-          label: 'Defect Count',
+          label: 'Defective Chains',
           data: dates.map(d => dateMap[d].defect),
+          borderColor: '#e67e22',
+          backgroundColor: 'rgba(230,126,34,0.1)',
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Defect Points',
+          data: dates.map(d => dateMap[d].points),
           borderColor: '#e74c3c',
           backgroundColor: 'rgba(231,76,60,0.1)',
           fill: true,
@@ -432,7 +447,8 @@ async function loadDailyReport() {
         <td>${getModeLabel(d.mode)}</td>
         <td>${d.total_inspections}</td>
         <td>${d.pass_count}</td>
-        <td>${d.defect_count}</td>
+        <td>${d.defective_chains ?? d.defect_count}</td>
+        <td><strong style="color:#e74c3c;">${d.total_defect_points ?? '-'}</strong></td>
         <td>${d.defect_rate_percent}%</td>
         <td>${d.avg_confidence_percent}%</td>
         <td>${d.total_chains_counted}</td>
@@ -462,6 +478,7 @@ async function loadWeeklyReport() {
         <td>${d.total_inspections}</td>
         <td>${d.pass_count}</td>
         <td>${d.defect_count}</td>
+        <td><strong style="color:#e74c3c;">${d.total_defect_points ?? '-'}</strong></td>
         <td>${d.defect_rate_percent}%</td>
         <td>${d.avg_confidence_percent}%</td>
         <td>${d.total_chains_counted}</td>
@@ -490,6 +507,7 @@ async function loadMonthlyReport() {
         <td>${d.total_inspections}</td>
         <td>${d.pass_count}</td>
         <td>${d.defect_count}</td>
+        <td><strong style="color:#e74c3c;">${d.total_defect_points ?? '-'}</strong></td>
         <td>${d.defect_rate_percent}%</td>
         <td>${d.avg_confidence_percent}%</td>
         <td>${d.total_chains_counted}</td>
@@ -524,6 +542,7 @@ async function loadHistory() {
         <td>${d.chain_size}</td>
         <td>${d.chain_count}</td>
         <td><span class="badge ${d.defect_type === 'none' ? 'badge-pass' : 'badge-defect'}">${getDefectLabel(d.defect_type)}</span></td>
+        <td><strong style="color:#e74c3c;">${d.defect_count ?? 0}</strong></td>
         <td>${(d.confidence * 100).toFixed(1)}%</td>
         <td>${getStatusLabel(d.order_status)}</td>
       </tr>
